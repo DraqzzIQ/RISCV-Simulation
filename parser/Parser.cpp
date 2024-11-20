@@ -31,22 +31,24 @@ static const map<string, string> m_jTypeOpcodes = {{"jal", "000"}};
 ParsingResult Parser::Parse(const vector<string>& instructions)
 {
     vector<uint32_t> parsedInstructions;
-    for (string instruction : instructions)
+    for (int i = 0; i < instructions.size(); i++)
     {
+        string instruction = instructions[i];
+        
         while (instruction[0] == ' ')
         {
             instruction.erase(0, 1);
         }
-        for (int i = 0; i < instruction.size(); i++)
+        for (int j = 0; j < instruction.size(); j++)
         {
-            if (instruction[i] == '(')
+            if (instruction[j ] == '(')
             {
-                instruction.insert(i, ",");
-                instruction.erase(i + 1, 1);
+                instruction.insert(j , ",");
+                instruction.erase(j  + 1, 1);
             }
-            if (instruction[i] == ')')
+            if (instruction[j ] == ')')
             {
-                instruction.erase(i, 1);
+                instruction.erase(j , 1);
             }
         }
         const size_t index = instruction.find(' ');
@@ -54,18 +56,18 @@ ParsingResult Parser::Parse(const vector<string>& instructions)
         string operands = ToLowerCase(RemoveSpaces(instruction.substr(index + 1)));
         if (opcode.size() < 2 || opcode.size() > 5 || operands.empty())
         {
-            return ParsingResult{false, parsedInstructions, instruction, ParsingError::INVALID_OPCODE};
+            return ParsingResult{false, parsedInstructions, instruction, i, ParsingError::INVALID_OPCODE};
         }
 
         auto [parsedInstruction, parsingError] = ParseInstruction(opcode, operands);
         if (ParsingError::NONE != parsingError)
         {
-            return ParsingResult{false, parsedInstructions, instruction, parsingError};
+            return ParsingResult{false, parsedInstructions, instruction, i, parsingError};
         }
 
         parsedInstructions.push_back(parsedInstruction);
     }
-    return ParsingResult{true, parsedInstructions, "", ParsingError::NONE};
+    return ParsingResult{true, parsedInstructions, "", -1, ParsingError::NONE};
 }
 
 std::pair<uint32_t, ParsingError> Parser::ParseInstruction(const string& opcode, const string& operands)

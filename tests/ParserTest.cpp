@@ -297,8 +297,8 @@ TEST(ParserTestSuite, SW)
 // J-Type tests
 TEST(ParserTestSuite, JAL)
 {
-    ParsingResult result = Parser::Parse({"jal x15, 77"});
+    ParsingResult result = Parser::Parse({"jal x15, 123"});
     EXPECT_EQ(result.success, true);
     EXPECT_EQ(result.instructions.size(), 1);
-    EXPECT_EQ(result.instructions[0], 0b00000100110110001000011111101111);
+    EXPECT_EQ(result.instructions[0], 0b00000111101000000000011111101111);
 }

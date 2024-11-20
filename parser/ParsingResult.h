@@ -22,11 +22,45 @@ enum class ParsingError : uint8_t
     OPCODE_NOT_FOUND = 10
 };
 
+constexpr std::string_view toString(ParsingError error) {
+    switch (error) {
+    case ParsingError::NONE:
+        return "No error";
+    case ParsingError::INVALID_OPCODE:
+        return "Invalid opcode";
+    case ParsingError::INVALID_OPERANDS:
+        return "Invalid operands";
+    case ParsingError::INVALID_OPERAND_COUNT:
+        return "Invalid operand count";
+    case ParsingError::INVALID_REGISTER_FORMAT:
+        return "Invalid register format";
+    case ParsingError::REGISTER_OUT_OF_BOUNDS:
+        return "Register out of bounds";
+    case ParsingError::OFFSET_OUT_OF_BOUNDS:
+        return "Offset out of bounds";
+    case ParsingError::IMMEDIATE_OUT_OF_BOUNDS:
+        return "Immediate out of bounds";
+    case ParsingError::INVALID_OFFSET_FORMAT:
+        return "Invalid offset format";
+    case ParsingError::INVALID_IMMEDIATE_FORMAT:
+        return "Invalid immediate format";
+    case ParsingError::OPCODE_NOT_FOUND:
+        return "Opcode not found";
+    default:
+        return "Unknown error";
+    }
+}
+
+inline std::ostream& operator<<(std::ostream& os, ParsingError error) {
+    return os << toString(error);
+}
+
 struct ParsingResult
 {
     bool success;
     vector<uint32_t> instructions;
     string errorInstruction;
+    int errorLine;
     ParsingError errorType;
 };
 
