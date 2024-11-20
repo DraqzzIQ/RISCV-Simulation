@@ -27,6 +27,10 @@ static const map<string, string> m_bTypeOpcodes = {
 };
 static const map<string, string> m_jTypeOpcodes = {{"jal", "000"}};
 
+static const map<string, string> m_rv32mExtensionOpcodes = {
+    {"mul", "000"}, {"mulh", "001"}, {"mulhsu", "010"}, {"mulhu", "011"},
+    {"div", "100"}, {"divu", "101"}, {"rem", "110"}, {"remu", "111"}
+};
 
 ParsingResult Parser::Parse(const vector<string>& instructions)
 {
@@ -54,7 +58,7 @@ ParsingResult Parser::Parse(const vector<string>& instructions)
         const size_t index = instruction.find(' ');
         string opcode = ToLowerCase(instruction.substr(0, index));
         string operands = ToLowerCase(RemoveSpaces(instruction.substr(index + 1)));
-        if (opcode.size() < 2 || opcode.size() > 5 || operands.empty())
+        if (opcode.size() < 2 || opcode.size() > 6 || operands.empty())
         {
             return ParsingResult{false, parsedInstructions, instruction, i, ParsingError::INVALID_OPCODE};
         }
@@ -91,6 +95,10 @@ std::pair<uint32_t, ParsingError> Parser::ParseInstruction(const string& opcode,
     if (m_jTypeOpcodes.contains(opcode))
     {
         return ParseJType(opcode, operands);
+    }
+    if (m_rv32mExtensionOpcodes.contains(opcode))
+    {
+        return ParseMExtension(opcode, operands);
     }
 
     return {0, ParsingError::OPCODE_NOT_FOUND};
@@ -186,6 +194,20 @@ std::pair<uint32_t, ParsingError> Parser::ParseJType(const string& opcode, const
         args[1].substr(1, 8)+ args[0] + "1101111";
     return {stoul(parsedInstruction, nullptr, 2), ParsingError::NONE};
 }
+
+std::pair<uint32_t, ParsingError> Parser::ParseMExtension(const string& opcode, const string& operands)
+{
+    auto [args, error] = SplitArguments(operands);
+    if (error != ParsingError::NONE)
+    {
+        return {0, error};
+    }
+
+    const string funct7 = "0000001";
+    const string parsedInstruction = funct7 + args[2] + args[1] + m_rv32mExtensionOpcodes.at(opcode) + args[0] + "0110011";
+    return {stoul(parsedInstruction, nullptr, 2), ParsingError::NONE};
+}
+
 
 std::pair<vector<string>, ParsingError> Parser::SplitArguments(const string& operands, const int count,
                                                                const int arg2Length, const int arg3Length, const bool isSigned)
@@ -358,6 +380,6 @@ string Parser::ToLowerCase(const string& input)
 string Parser::RemoveSpaces(const string& input)
 {
     string result = input;
-    std::erase_if(result, ::isspace);
+    std::erase_if(result, isspace);
     return result;
 }

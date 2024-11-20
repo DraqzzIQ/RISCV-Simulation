@@ -294,6 +294,56 @@ TEST(ParserTestSuite, SW)
 }
 
 
+// B-Type tests
+TEST(ParserTestSuite, BEQ)
+{
+    ParsingResult result = Parser::Parse({"beq x13, x12, 123"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000110110001101000110101100011);
+}
+
+TEST(ParserTestSuite, BNE)
+{
+    ParsingResult result = Parser::Parse({"bne x13, x19, 3255"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b01001011001101101001101111100011);
+}
+
+TEST(ParserTestSuite, BLT)
+{
+    ParsingResult result = Parser::Parse({"blt x13, x19, 3255"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b01001011001101101100101111100011);
+}
+
+TEST(ParserTestSuite, BGE)
+{
+    ParsingResult result = Parser::Parse({"bge x13, x19, 3255"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b01001011001101101101101111100011);
+}
+
+TEST(ParserTestSuite, BLTU)
+{
+    ParsingResult result = Parser::Parse({"bltu x13, x19, -3255"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b10110101001101101110010001100011);
+}
+
+TEST(ParserTestSuite, BGEU)
+{
+    ParsingResult result = Parser::Parse({"bgeu x0, x1, -1"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b11111110000100000111111111100011);
+}
+
+
 // J-Type tests
 TEST(ParserTestSuite, JAL)
 {
@@ -301,4 +351,70 @@ TEST(ParserTestSuite, JAL)
     EXPECT_EQ(result.success, true);
     EXPECT_EQ(result.instructions.size(), 1);
     EXPECT_EQ(result.instructions[0], 0b00000111101000000000011111101111);
+}
+
+
+// MExtension tests
+TEST(ParserTestSuite, MUL)
+{
+    ParsingResult result = Parser::Parse({"mul x15, x17, x18"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000011001010001000011110110011);
+}
+
+TEST(ParserTestSuite, MULH)
+{
+    ParsingResult result = Parser::Parse({"mulh x15, x17, x18"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000011001010001001011110110011);
+}
+
+TEST(ParserTestSuite, MULHSU)
+{
+    ParsingResult result = Parser::Parse({"mulhsu x15, x17, x18"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000011001010001010011110110011);
+}
+
+TEST(ParserTestSuite, MULHU)
+{
+    ParsingResult result = Parser::Parse({"mulhu x15, x17, x18"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000011001010001011011110110011);
+}
+
+TEST(ParserTestSuite, DIV)
+{
+    ParsingResult result = Parser::Parse({"div x15, x17, x18"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000011001010001100011110110011);
+}
+
+TEST(ParserTestSuite, DIVU)
+{
+    ParsingResult result = Parser::Parse({"divu x15, x17, x18"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000011001010001101011110110011);
+}
+
+TEST(ParserTestSuite, REM)
+{
+    ParsingResult result = Parser::Parse({"rem x15, x17, x18"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000011001010001110011110110011);
+}
+
+TEST(ParserTestSuite, REMU)
+{
+    ParsingResult result = Parser::Parse({"remu x15, x17, x18"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000011001010001111011110110011);
 }

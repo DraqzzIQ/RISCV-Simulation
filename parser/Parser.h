@@ -22,6 +22,7 @@ private:
     static std::pair<uint32_t, ParsingError> ParseSType(const string& opcode, const string& operands);
     static std::pair<uint32_t, ParsingError> ParseBType(const string& opcode, const string& operands);
     static std::pair<uint32_t, ParsingError> ParseJType(const string& opcode, const string& operands);
+    static std::pair<uint32_t, ParsingError> ParseMExtension(const string& opcode, const string& operands);
     static std::pair<vector<string>, ParsingError> SplitArguments(const string& operands, int count = 3,
         int arg2Length = 5, int arg3Length = 5, bool isSigned = true);
     static string ToLowerCase(const string& input);
