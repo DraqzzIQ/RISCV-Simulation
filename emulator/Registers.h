@@ -21,7 +21,7 @@ public:
     uint32_t GetRegister(uint8_t reg) const;
     uint16_t GetHighRegister(uint8_t reg) const;
     uint16_t GetLowRegister(uint8_t reg) const;
-    vector<uint32_t> GetRegisters() const { return m_registers; }    
+    vector<uint32_t> GetRegisters() const;
 private:
     // 0: constant 0
     // 1-31: general purpose registers

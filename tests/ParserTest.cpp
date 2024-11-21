@@ -354,6 +354,40 @@ TEST(ParserTestSuite, JAL)
 }
 
 
+// U-Type tests
+TEST(ParserTestSuite, LUI1)
+{
+    ParsingResult result = Parser::Parse({"lui x15, 524287"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b01111111111111111111011110110111);
+}
+
+// U-Type tests
+TEST(ParserTestSuite, LUI2)
+{
+    ParsingResult result = Parser::Parse({"lui x15, -524288"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b10000000000000000000011110110111);
+}
+
+TEST(ParserTestSuite, AUIPC)
+{
+    ParsingResult result = Parser::Parse({"auipc x15, 123"});
+    EXPECT_EQ(result.success, true);
+    EXPECT_EQ(result.instructions.size(), 1);
+    EXPECT_EQ(result.instructions[0], 0b00000000000001111011011110010111);
+}
+
+TEST(ParserTestSuite, OutOfBoundsAUIPC)
+{
+    ParsingResult result = Parser::Parse({"auipc x15, 524288"});
+    EXPECT_EQ(result.success, false);
+    EXPECT_EQ(result.errorType, ParsingError::IMMEDIATE_OUT_OF_BOUNDS);
+}
+
+
 // MExtension tests
 TEST(ParserTestSuite, MUL)
 {

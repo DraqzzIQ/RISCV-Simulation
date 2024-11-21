@@ -7,4 +7,7 @@ add_library(emulator STATIC Emulator.cpp
         CPU.cpp
         CPU.h
         Registers.cpp
-        Registers.h)
+        Registers.h
+        Memory.cpp
+        Memory.h
+        Opcodes.h)

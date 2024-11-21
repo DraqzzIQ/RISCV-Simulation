@@ -60,3 +60,8 @@ uint16_t Registers::GetLowRegister(const uint8_t reg) const
 {
     return m_registers[reg] & 0x0000FFFF;
 }
+
+vector<uint32_t> Registers::GetRegisters() const
+{
+    return vector(m_registers.begin(), m_registers.begin() + 32);
+}

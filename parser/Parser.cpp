@@ -26,7 +26,7 @@ static const map<string, string> m_bTypeOpcodes = {
     {"bltu", "110"}, {"bgeu", "111"}
 };
 static const map<string, string> m_jTypeOpcodes = {{"jal", "000"}};
-
+static const map<string, string> m_uTypeOpcodes = {{"lui", "000"}, {"auipc", "000"}};
 static const map<string, string> m_rv32mExtensionOpcodes = {
     {"mul", "000"}, {"mulh", "001"}, {"mulhsu", "010"}, {"mulhu", "011"},
     {"div", "100"}, {"divu", "101"}, {"rem", "110"}, {"remu", "111"}
@@ -95,6 +95,10 @@ std::pair<uint32_t, ParsingError> Parser::ParseInstruction(const string& opcode,
     if (m_jTypeOpcodes.contains(opcode))
     {
         return ParseJType(opcode, operands);
+    }
+    if (m_uTypeOpcodes.contains(opcode))
+    {
+        return ParseUType(opcode, operands);
     }
     if (m_rv32mExtensionOpcodes.contains(opcode))
     {
@@ -192,6 +196,18 @@ std::pair<uint32_t, ParsingError> Parser::ParseJType(const string& opcode, const
 
     const string parsedInstruction = args[1][0] + args[1].substr(10, 10) + args[1][9] +
         args[1].substr(1, 8)+ args[0] + "1101111";
+    return {stoul(parsedInstruction, nullptr, 2), ParsingError::NONE};
+}
+
+std::pair<uint32_t, ParsingError> Parser::ParseUType(const string& opcode, const string& operands)
+{
+    auto [args, error] = SplitArguments(operands, 2, 20);
+    if (error != ParsingError::NONE)
+    {
+        return {0, error};
+    }
+
+    const string parsedInstruction = args[1] + args[0] + (opcode == "lui" ? "0110111" : "0010111");
     return {stoul(parsedInstruction, nullptr, 2), ParsingError::NONE};
 }
 
