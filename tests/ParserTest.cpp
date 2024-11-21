@@ -1,7 +1,7 @@
 #include <bitset>
 
-#include "gtest/gtest.h"
 #include "../parser/Parser.h"
+#include "gtest/gtest.h"
 
 // Register tests
 TEST(ParserTestSuite, PositiveRegisterBounds)

@@ -5,9 +5,9 @@
 
 #include "ParsingResult.h"
 
+using std::map;
 using std::string;
 using std::vector;
-using std::map;
 
 class Parser
 {
@@ -15,6 +15,7 @@ public:
     // Parse instructions from a vector of strings to a vector of 32-bit unsigned integers
     // Each string is a single instruction
     static ParsingResult Parse(const vector<string>& instructions);
+
 private:
     static std::pair<uint32_t, ParsingError> ParseInstruction(const string& opcode, const string& operands);
     static std::pair<uint32_t, ParsingError> ParseRType(const string& opcode, const string& operands);
@@ -24,8 +25,8 @@ private:
     static std::pair<uint32_t, ParsingError> ParseJType(const string& opcode, const string& operands);
     static std::pair<uint32_t, ParsingError> ParseUType(const string& opcode, const string& operands);
     static std::pair<uint32_t, ParsingError> ParseMExtension(const string& opcode, const string& operands);
-    static std::pair<vector<string>, ParsingError> SplitArguments(const string& operands, int count = 3,
-        int arg2Length = 5, int arg3Length = 5, bool isSigned = true);
+    static std::pair<vector<string>, ParsingError>
+    SplitArguments(const string& operands, int count = 3, int arg2Length = 5, int arg3Length = 5, bool isSigned = true);
     static string ToLowerCase(const string& input);
     static string RemoveSpaces(const string& input);
     static std::pair<string, ParsingError> ArgumentToBinary(const string& argument, uint8_t length, bool isSigned);
@@ -34,4 +35,4 @@ private:
     static std::pair<int, ParsingError> ParseImmediate(const string& immediate);
 };
 
-#endif //PARSER_LIBRARY_H
+#endif // PARSER_LIBRARY_H

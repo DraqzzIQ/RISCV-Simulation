@@ -7,8 +7,9 @@ set(CMAKE_CXX_STANDARD 23)
 
 add_executable(Google_Tests_run
         ParserTest.cpp
-        CPUTest.cpp)
+        CPUTest.cpp
+        MemoryTest.cpp)
 
-target_link_libraries(Google_Tests_run parser emulator)
+target_link_libraries(Google_Tests_run parser simulator)
 
 target_link_libraries(Google_Tests_run gtest gtest_main)

@@ -1,53 +1,52 @@
 #include <bitset>
 #include <gtest/gtest.h>
 
-#include "../emulator/CPU.h"
+#include "../simulator/CPUUtil.h"
 
 TEST(CPUTestSuite, GetFunct7)
 {
-    CPU cpu(nullptr);
     uint32_t instruction = 0b11101110000000000000000000000000;
-    EXPECT_EQ(0b01110111, cpu.GetFunct7(instruction));
+    EXPECT_EQ(0b01110111, CPUUtil::GetFunct7(instruction));
 }
 
 TEST(CPUTestSuite, GetFunct3)
 {
-    CPU cpu(nullptr);
     uint32_t instruction = 0b00000000000000000101000000000000;
-    EXPECT_EQ(0b101, cpu.GetFunct3(instruction));
+    EXPECT_EQ(0b101, CPUUtil::GetFunct3(instruction));
 }
 
 TEST(CPUTestSuite, GetRD)
 {
-    CPU cpu(nullptr);
     uint32_t instruction = 0b00000000000000000001110111000000;
-    EXPECT_EQ(0b11011, cpu.GetRD(instruction));
+    EXPECT_EQ(0b11011, CPUUtil::GetRD(instruction));
 }
 
 TEST(CPUTestSuite, GetRS1)
 {
-    CPU cpu(nullptr);
     uint32_t instruction = 0b00000000000111011100000000000000;
-    EXPECT_EQ(0b11011, cpu.GetRS1(instruction));
+    EXPECT_EQ(0b11011, CPUUtil::GetRS1(instruction));
 }
 
 TEST(CPUTestSuite, GetRS2)
 {
-    CPU cpu(nullptr);
     uint32_t instruction = 0b00000011101110000000000000000000;
-    EXPECT_EQ(0b11011, cpu.GetRS2(instruction));
+    EXPECT_EQ(0b11011, CPUUtil::GetRS2(instruction));
 }
 
 TEST(CPUTestSuite, GetImm12)
 {
-    CPU cpu(nullptr);
     uint32_t instruction = 0b11111111100010000000000000000000;
-    EXPECT_EQ(0b111111111000, cpu.GetImm12(instruction));
+    EXPECT_EQ(0b111111111000, CPUUtil::GetImm12(instruction));
 }
 
 TEST(CPUTestSuite, GetImm5)
 {
-    CPU cpu(nullptr);
     uint32_t instruction = 0b11111111100010000000000000000000;
-    EXPECT_EQ(0b11000, cpu.GetImm5(instruction));
+    EXPECT_EQ(0b11000, CPUUtil::GetImm5(instruction));
+}
+
+TEST(CPUTestSuite, GetImm20)
+{
+    uint32_t instruction = 0b11111111100010000000000000000000;
+    EXPECT_EQ(0b11111111100010000000, CPUUtil::GetImm20(instruction));
 }

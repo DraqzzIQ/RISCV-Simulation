@@ -9,7 +9,7 @@ static constexpr uint8_t S_Type = 0b00100011;
 static constexpr uint8_t B_Type = 0b01100011;
 static constexpr uint8_t LUI_Type = 0b00110111;
 static constexpr uint8_t AUIPC_Type = 0b00100111;
-static constexpr uint8_t J_Type = 0b01101111;
+static constexpr uint8_t JAL_Type = 0b01101111;
 static constexpr uint8_t JALR_Type = 0b01100111;
 
 static constexpr uint8_t ADD = 0x0;
@@ -59,4 +59,4 @@ static constexpr uint8_t BLTU = 0x6;
 static constexpr uint8_t BGEU = 0x7;
 
 static constexpr uint8_t JALR = 0x0;
-#endif //OPCODES_H
+#endif // OPCODES_H

@@ -22,7 +22,8 @@ enum class ParsingError : uint8_t
     OPCODE_NOT_FOUND = 10
 };
 
-constexpr std::string_view toString(ParsingError error) {
+constexpr std::string_view toString(ParsingError error)
+{
     switch (error) {
     case ParsingError::NONE:
         return "No error";
@@ -51,9 +52,7 @@ constexpr std::string_view toString(ParsingError error) {
     }
 }
 
-inline std::ostream& operator<<(std::ostream& os, ParsingError error) {
-    return os << toString(error);
-}
+inline std::ostream& operator<<(std::ostream& os, ParsingError error) { return os << toString(error); }
 
 struct ParsingResult
 {
@@ -64,4 +63,4 @@ struct ParsingResult
     ParsingError errorType;
 };
 
-#endif //PARSINGERROR_H
+#endif // PARSINGERROR_H

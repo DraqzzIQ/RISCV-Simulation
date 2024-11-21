@@ -1,71 +1,57 @@
 #include "Parser.h"
 
+#include <algorithm>
 #include <bitset>
-#include <sstream>
 #include <ranges>
 #include <regex>
-#include <bits/ranges_algo.h>
+#include <sstream>
+#include <string>
 
 using std::stoi;
-using std::bitset;
 
-static const map<string, string> m_rTypeOpcodes = {
-    {"add", "000"}, {"sub", "000"}, {"sll", "001"}, {"slt", "010"},
-    {"sltu", "011"}, {"xor", "100"}, {"srl", "101"}, {"sra", "101"},
-    {"or", "110"}, {"and", "111"}
-};
-static const map<string, string> m_iTypeOpcodes = {
-    {"addi", "000"}, {"slli", "001"}, {"slti", "010"}, {"sltiu", "011"},
-    {"xori", "100"}, {"srli", "101"}, {"srai", "101"}, {"ori", "110"},
-    {"andi", "111"}, {"lb", "000"}, {"lh", "001"}, {"lw", "010"},
-    {"lbu", "100"}, {"lhu", "101"}, {"jalr", "000"}
-};
+static const map<string, string> m_rTypeOpcodes = {{"add", "000"},  {"sub", "000"}, {"sll", "001"}, {"slt", "010"},
+                                                   {"sltu", "011"}, {"xor", "100"}, {"srl", "101"}, {"sra", "101"},
+                                                   {"or", "110"},   {"and", "111"}};
+static const map<string, string> m_iTypeOpcodes = {{"addi", "000"}, {"slli", "001"}, {"slti", "010"}, {"sltiu", "011"},
+                                                   {"xori", "100"}, {"srli", "101"}, {"srai", "101"}, {"ori", "110"},
+                                                   {"andi", "111"}, {"lb", "000"},   {"lh", "001"},   {"lw", "010"},
+                                                   {"lbu", "100"},  {"lhu", "101"},  {"jalr", "000"}};
 static const map<string, string> m_sTypeOpcodes = {{"sb", "000"}, {"sh", "001"}, {"sw", "010"}};
-static const map<string, string> m_bTypeOpcodes = {
-    {"beq", "000"}, {"bne", "001"}, {"blt", "100"}, {"bge", "101"},
-    {"bltu", "110"}, {"bgeu", "111"}
-};
+static const map<string, string> m_bTypeOpcodes = {{"beq", "000"}, {"bne", "001"},  {"blt", "100"},
+                                                   {"bge", "101"}, {"bltu", "110"}, {"bgeu", "111"}};
 static const map<string, string> m_jTypeOpcodes = {{"jal", "000"}};
 static const map<string, string> m_uTypeOpcodes = {{"lui", "000"}, {"auipc", "000"}};
-static const map<string, string> m_rv32mExtensionOpcodes = {
-    {"mul", "000"}, {"mulh", "001"}, {"mulhsu", "010"}, {"mulhu", "011"},
-    {"div", "100"}, {"divu", "101"}, {"rem", "110"}, {"remu", "111"}
-};
+static const map<string, string> m_rv32mExtensionOpcodes = {{"mul", "000"},   {"mulh", "001"}, {"mulhsu", "010"},
+                                                            {"mulhu", "011"}, {"div", "100"},  {"divu", "101"},
+                                                            {"rem", "110"},   {"remu", "111"}};
 
 ParsingResult Parser::Parse(const vector<string>& instructions)
 {
     vector<uint32_t> parsedInstructions;
-    for (int i = 0; i < instructions.size(); i++)
-    {
+    for (int i = 0; i < instructions.size(); i++) {
         string instruction = instructions[i];
-        
-        while (instruction[0] == ' ')
-        {
+
+        while (instruction[0] == ' ') {
             instruction.erase(0, 1);
         }
-        for (int j = 0; j < instruction.size(); j++)
-        {
-            if (instruction[j ] == '(')
-            {
-                instruction.insert(j , ",");
-                instruction.erase(j  + 1, 1);
+        for (int j = 0; j < instruction.size(); j++) {
+            if (instruction[j] == '(') {
+                instruction.insert(j, ",");
+                instruction.erase(j + 1, 1);
             }
-            if (instruction[j ] == ')')
-            {
-                instruction.erase(j , 1);
+            if (instruction[j] == ')') {
+                instruction.erase(j, 1);
             }
         }
         const size_t index = instruction.find(' ');
         string opcode = ToLowerCase(instruction.substr(0, index));
         string operands = ToLowerCase(RemoveSpaces(instruction.substr(index + 1)));
-        if (opcode.size() < 2 || opcode.size() > 6 || operands.empty())
-        {
+        if (opcode.size() < 2 || opcode.size() > 6 || operands.empty()) {
             return ParsingResult{false, parsedInstructions, instruction, i, ParsingError::INVALID_OPCODE};
         }
 
         auto [parsedInstruction, parsingError] = ParseInstruction(opcode, operands);
-        if (ParsingError::NONE != parsingError)
-        {
+        if (ParsingError::NONE != parsingError) {
             return ParsingResult{false, parsedInstructions, instruction, i, parsingError};
         }
 
@@ -76,32 +62,25 @@ ParsingResult Parser::Parse(const vector<string>& instructions)
 
 std::pair<uint32_t, ParsingError> Parser::ParseInstruction(const string& opcode, const string& operands)
 {
-    if (m_rTypeOpcodes.contains(opcode))
-    {
+    if (m_rTypeOpcodes.contains(opcode)) {
         return ParseRType(opcode, operands);
     }
-    if (m_iTypeOpcodes.contains(opcode))
-    {
+    if (m_iTypeOpcodes.contains(opcode)) {
         return ParseIType(opcode, operands);
     }
-    if (m_sTypeOpcodes.contains(opcode))
-    {
+    if (m_sTypeOpcodes.contains(opcode)) {
         return ParseSType(opcode, operands);
     }
-    if (m_bTypeOpcodes.contains(opcode))
-    {
+    if (m_bTypeOpcodes.contains(opcode)) {
         return ParseBType(opcode, operands);
     }
-    if (m_jTypeOpcodes.contains(opcode))
-    {
+    if (m_jTypeOpcodes.contains(opcode)) {
         return ParseJType(opcode, operands);
     }
-    if (m_uTypeOpcodes.contains(opcode))
-    {
+    if (m_uTypeOpcodes.contains(opcode)) {
         return ParseUType(opcode, operands);
     }
-    if (m_rv32mExtensionOpcodes.contains(opcode))
-    {
+    if (m_rv32mExtensionOpcodes.contains(opcode)) {
         return ParseMExtension(opcode, operands);
     }
 
@@ -111,8 +90,7 @@ std::pair<uint32_t, ParsingError> Parser::ParseInstruction(const string& opcode,
 std::pair<uint32_t, ParsingError> Parser::ParseRType(const string& opcode, const string& operands)
 {
     auto [args, error] = SplitArguments(operands);
-    if (error != ParsingError::NONE)
-    {
+    if (error != ParsingError::NONE) {
         return {0, error};
     }
 
@@ -123,16 +101,15 @@ std::pair<uint32_t, ParsingError> Parser::ParseRType(const string& opcode, const
 
 std::pair<uint32_t, ParsingError> Parser::ParseIType(const string& opcode, const string& operands)
 {
-    const vector<string> twelveBitArg2Opcodes = {
-        "lb", "lh", "lw", "lbu", "lhu", "jalr"
-    };
-    
-    const int arg3Length =  std::ranges::find(twelveBitArg2Opcodes, opcode) != twelveBitArg2Opcodes.end() ? 5 : opcode == "srai" ? 7 : 12;
+    const vector<string> twelveBitArg2Opcodes = {"lb", "lh", "lw", "lbu", "lhu", "jalr"};
+
+    const int arg3Length = std::ranges::find(twelveBitArg2Opcodes, opcode) != twelveBitArg2Opcodes.end() ? 5
+        : opcode == "srai"                                                                               ? 7
+                                                                                                         : 12;
     const int arg2Length = std::ranges::find(twelveBitArg2Opcodes, opcode) != twelveBitArg2Opcodes.end() ? 12 : 5;
     const bool isSigned = !(opcode == "srai" || opcode == "slli" || opcode == "srli");
     auto [args, error] = SplitArguments(operands, 3, arg2Length, arg3Length, isSigned);
-    if (error != ParsingError::NONE)
-    {
+    if (error != ParsingError::NONE) {
         return {0, error};
     }
 
@@ -142,16 +119,14 @@ std::pair<uint32_t, ParsingError> Parser::ParseIType(const string& opcode, const
         const string funct7 = (opcode == "srai") ? "01000" : "00000";
         parsedInstruction = funct7 + args[2] + args[1] + m_iTypeOpcodes.at(opcode) + args[0] + "0010011";
     }
-    else if (opcode == "jalr")
-    {
+    else if (opcode == "jalr") {
         parsedInstruction = args[1] + args[2] + m_iTypeOpcodes.at(opcode) + args[0] + "1100111";
     }
-    else if(opcode[0] == 'l') // load instructions
+    else if (opcode[0] == 'l') // load instructions
     {
         parsedInstruction = args[1] + args[2] + m_iTypeOpcodes.at(opcode) + args[0] + "0000011";
     }
-    else
-    {
+    else {
         parsedInstruction = args[2] + args[1] + m_iTypeOpcodes.at(opcode) + args[0] + "0010011";
     }
     return {std::stoul(parsedInstruction, nullptr, 2), ParsingError::NONE};
@@ -160,8 +135,7 @@ std::pair<uint32_t, ParsingError> Parser::ParseIType(const string& opcode, const
 std::pair<uint32_t, ParsingError> Parser::ParseSType(const string& opcode, const string& operands)
 {
     auto [args, error] = SplitArguments(operands, 3, 12);
-    if (error != ParsingError::NONE)
-    {
+    if (error != ParsingError::NONE) {
         return {0, error};
     }
 
@@ -175,8 +149,7 @@ std::pair<uint32_t, ParsingError> Parser::ParseSType(const string& opcode, const
 std::pair<uint32_t, ParsingError> Parser::ParseBType(const string& opcode, const string& operands)
 {
     auto [args, error] = SplitArguments(operands, 3, 5, 13);
-    if (error != ParsingError::NONE)
-    {
+    if (error != ParsingError::NONE) {
         return {0, error};
     }
 
@@ -189,21 +162,19 @@ std::pair<uint32_t, ParsingError> Parser::ParseBType(const string& opcode, const
 std::pair<uint32_t, ParsingError> Parser::ParseJType(const string& opcode, const string& operands)
 {
     auto [args, error] = SplitArguments(operands, 2, 21);
-    if (error != ParsingError::NONE)
-    {
+    if (error != ParsingError::NONE) {
         return {0, error};
     }
 
-    const string parsedInstruction = args[1][0] + args[1].substr(10, 10) + args[1][9] +
-        args[1].substr(1, 8)+ args[0] + "1101111";
+    const string parsedInstruction =
+        args[1][0] + args[1].substr(10, 10) + args[1][9] + args[1].substr(1, 8) + args[0] + "1101111";
     return {stoul(parsedInstruction, nullptr, 2), ParsingError::NONE};
 }
 
 std::pair<uint32_t, ParsingError> Parser::ParseUType(const string& opcode, const string& operands)
 {
     auto [args, error] = SplitArguments(operands, 2, 20);
-    if (error != ParsingError::NONE)
-    {
+    if (error != ParsingError::NONE) {
         return {0, error};
     }
 
@@ -214,25 +185,25 @@ std::pair<uint32_t, ParsingError> Parser::ParseUType(const string& opcode, const
 std::pair<uint32_t, ParsingError> Parser::ParseMExtension(const string& opcode, const string& operands)
 {
     auto [args, error] = SplitArguments(operands);
-    if (error != ParsingError::NONE)
-    {
+    if (error != ParsingError::NONE) {
         return {0, error};
     }
 
     const string funct7 = "0000001";
-    const string parsedInstruction = funct7 + args[2] + args[1] + m_rv32mExtensionOpcodes.at(opcode) + args[0] + "0110011";
+    const string parsedInstruction =
+        funct7 + args[2] + args[1] + m_rv32mExtensionOpcodes.at(opcode) + args[0] + "0110011";
     return {stoul(parsedInstruction, nullptr, 2), ParsingError::NONE};
 }
 
 
 std::pair<vector<string>, ParsingError> Parser::SplitArguments(const string& operands, const int count,
-                                                               const int arg2Length, const int arg3Length, const bool isSigned)
+                                                               const int arg2Length, const int arg3Length,
+                                                               const bool isSigned)
 {
     const size_t firstComma = operands.find(',');
     const size_t secondComma = (count == 3) ? operands.find(',', firstComma + 1) : 0;
 
-    if (firstComma == string::npos || secondComma == string::npos)
-    {
+    if (firstComma == string::npos || secondComma == string::npos) {
         return {{}, ParsingError::INVALID_OPERANDS};
     }
 
@@ -241,13 +212,15 @@ std::pair<vector<string>, ParsingError> Parser::SplitArguments(const string& ope
     const string arg3Str = (count == 3) ? operands.substr(secondComma + 1) : "";
 
     auto [arg1, rdError] = ArgumentToBinary(arg1Str, 5, isSigned);
-    if (rdError != ParsingError::NONE) return {{}, rdError};
+    if (rdError != ParsingError::NONE)
+        return {{}, rdError};
     auto [arg2, rs1Error] = ArgumentToBinary(arg2Str, arg2Length, isSigned);
-    if (rs1Error != ParsingError::NONE) return {{}, rs1Error};
-    auto [arg3, rs2Error] = (count == 3)
-                                ? ArgumentToBinary(arg3Str, arg3Length, isSigned)
-                                : std::pair<string, ParsingError>{"", ParsingError::NONE};
-    if (rs2Error != ParsingError::NONE) return {{}, rs2Error};
+    if (rs1Error != ParsingError::NONE)
+        return {{}, rs1Error};
+    auto [arg3, rs2Error] = (count == 3) ? ArgumentToBinary(arg3Str, arg3Length, isSigned)
+                                         : std::pair<string, ParsingError>{"", ParsingError::NONE};
+    if (rs2Error != ParsingError::NONE)
+        return {{}, rs2Error};
 
     return {{arg1, arg2, arg3}, ParsingError::NONE};
 }
@@ -258,8 +231,7 @@ vector<string> SplitOperands(const string& operands)
     string operand;
     vector<string> result;
 
-    while (getline(ss, operand, ','))
-    {
+    while (getline(ss, operand, ',')) {
         // Trim whitespace around the operand.
         operand.erase(0, operand.find_first_not_of(' '));
         operand.erase(operand.find_last_not_of(' ') + 1);
@@ -270,18 +242,16 @@ vector<string> SplitOperands(const string& operands)
 }
 
 
-std::pair<string, ParsingError> Parser::ArgumentToBinary(const string& argument, const uint8_t length, const bool isSigned)
+std::pair<string, ParsingError> Parser::ArgumentToBinary(const string& argument, const uint8_t length,
+                                                         const bool isSigned)
 {
     // Check if the argument is a register (e.g., x5).
-    if (argument[0] == 'x')
-    {
+    if (argument[0] == 'x') {
         auto [regNumber, error] = RegisterToNumber(argument);
-        if (error != ParsingError::NONE)
-        {
+        if (error != ParsingError::NONE) {
             return {"", error};
         }
-        if (regNumber < 0 || regNumber >= (1 << length))
-        {
+        if (regNumber < 0 || regNumber >= (1 << length)) {
             return {"", ParsingError::REGISTER_OUT_OF_BOUNDS};
         }
         return {std::bitset<32>(regNumber).to_string().substr(32 - length), ParsingError::NONE};
@@ -289,45 +259,37 @@ std::pair<string, ParsingError> Parser::ArgumentToBinary(const string& argument,
 
     // Parse immediate value in various formats.
     auto [immediate, error] = ParseImmediate(argument);
-    if (error != ParsingError::NONE)
-    {
+    if (error != ParsingError::NONE) {
         return {"", error};
     }
-    if (immediate < 0 && !isSigned)
-    {
+    if (immediate < 0 && !isSigned) {
         return {"", ParsingError::IMMEDIATE_OUT_OF_BOUNDS};
     }
-    if (isSigned && (immediate < -(1 << (length - 1)) || immediate >= (1 << (length - 1))))
-    {
+    if (isSigned && (immediate < -(1 << (length - 1)) || immediate >= (1 << (length - 1)))) {
         return {"", ParsingError::IMMEDIATE_OUT_OF_BOUNDS};
     }
-    
+
     return {std::bitset<32>(immediate).to_string().substr(32 - length), ParsingError::NONE};
 }
 
 std::pair<int, ParsingError> Parser::RegisterToNumber(const string& reg)
 {
     // Extract the register number (e.g., x5 -> 5).
-    if (reg[0] != 'x')
-    {
+    if (reg[0] != 'x') {
         return {0, ParsingError::INVALID_REGISTER_FORMAT};
     }
 
-    try
-    {
+    try {
         int regNumber = stoi(reg.substr(1));
-        if (regNumber < 0 || regNumber > 31)
-        {
+        if (regNumber < 0 || regNumber > 31) {
             return {0, ParsingError::REGISTER_OUT_OF_BOUNDS};
         }
         return {regNumber, ParsingError::NONE};
     }
-    catch (std::invalid_argument&)
-    {
+    catch (std::invalid_argument&) {
         return {0, ParsingError::INVALID_REGISTER_FORMAT};
     }
-    catch (std::out_of_range&)
-    {
+    catch (std::out_of_range&) {
         return {0, ParsingError::REGISTER_OUT_OF_BOUNDS};
     }
 }
@@ -337,21 +299,17 @@ std::pair<int, ParsingError> Parser::ParseOffset(const string& offset)
     const std::regex offsetRegex("^(-?[0-9]+)\\("); // e.g. 12(x5)
     std::smatch match;
 
-    if (!regex_match(offset, match, offsetRegex))
-    {
+    if (!regex_match(offset, match, offsetRegex)) {
         return {0, ParsingError::INVALID_OFFSET_FORMAT};
     }
 
-    try
-    {
+    try {
         return {stoi(match[1].str()), ParsingError::NONE};
     }
-    catch (std::invalid_argument&)
-    {
+    catch (std::invalid_argument&) {
         return {0, ParsingError::INVALID_OFFSET_FORMAT};
     }
-    catch (std::out_of_range&)
-    {
+    catch (std::out_of_range&) {
         return {0, ParsingError::OFFSET_OUT_OF_BOUNDS};
     }
 }
@@ -366,22 +324,18 @@ std::pair<int, ParsingError> Parser::ParseImmediate(const string& immediate)
     const bool isDec = std::regex_match(immediate, decRegex);
 
     const int base = isHex ? 16 : isBin ? 2 : isDec ? 10 : 0;
-    if (base == 0)
-    {
+    if (base == 0) {
         return {0, ParsingError::INVALID_IMMEDIATE_FORMAT};
     }
 
     const string parsedImmediate = isDec ? immediate : immediate.substr(2); // Remove prefix (0x or 0b)
-    try
-    {
+    try {
         return {stoi(parsedImmediate, nullptr, base), ParsingError::NONE};
     }
-    catch (std::invalid_argument&)
-    {
+    catch (std::invalid_argument&) {
         return {0, ParsingError::INVALID_IMMEDIATE_FORMAT};
     }
-    catch (std::out_of_range&)
-    {
+    catch (std::out_of_range&) {
         return {0, ParsingError::IMMEDIATE_OUT_OF_BOUNDS};
     }
 }
