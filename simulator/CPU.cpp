@@ -44,23 +44,27 @@ ExecutionResult CPU::ExecuteInstruction(const uint32_t instruction) const
     switch (CPUUtil::GetOpcode(instruction)) {
     case R_Type:
         {
+            const ExecutionResult result = ExecuteRType(instruction);
             m_registers->IncrementPC();
-            return ExecuteRType(instruction);
+            return result;
         }
     case I_Type:
         {
+            const ExecutionResult result = ExecuteIType(instruction);
             m_registers->IncrementPC();
-            return ExecuteIType(instruction);
+            return result;
         }
     case Load_Type:
         {
+            const ExecutionResult result = ExecuteLoadType(instruction);
             m_registers->IncrementPC();
-            return ExecuteLoadType(instruction);
+            return result;
         }
     case S_Type:
         {
+            const ExecutionResult result = ExecuteSType(instruction);
             m_registers->IncrementPC();
-            return ExecuteSType(instruction);
+            return result;
         }
     case B_Type:
         {
@@ -68,13 +72,15 @@ ExecutionResult CPU::ExecuteInstruction(const uint32_t instruction) const
         }
     case LUI_Type:
         {
+            const ExecutionResult result = ExecuteLUIType(instruction);
             m_registers->IncrementPC();
-            return ExecuteLUIType(instruction);
+            return result;
         }
     case AUIPC_Type:
         {
+            const ExecutionResult result = ExecuteAUIPCType(instruction);
             m_registers->IncrementPC();
-            return ExecuteAUIPCType(instruction);
+            return result;
         }
     case JAL_Type:
         {

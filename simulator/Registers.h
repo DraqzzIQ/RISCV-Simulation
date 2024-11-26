@@ -17,8 +17,6 @@ public:
     void IncrementPC();
     uint32_t GetPC() const;
     void SetRegister(uint8_t reg, uint32_t value);
-    void SetHighRegister(uint8_t reg, uint16_t value);
-    void SetLowRegister(uint8_t reg, uint16_t value);
     uint32_t GetRegister(uint8_t reg) const;
     vector<uint32_t> GetRegisters() const;
 

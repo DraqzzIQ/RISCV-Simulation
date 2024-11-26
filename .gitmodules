@@ -1,3 +1,9 @@
 [submodule "tests/lib/googletest"]
 	path = tests/lib/googletest
 	url = https://github.com/google/googletest
+[submodule "ui/lib/QCodeEditor"]
+	path = ui/lib/QCodeEditor
+	url = https://github.com/jcelerier/QCodeEditor
+[submodule "ui/lib/K-Editor"]
+	path = ui/lib/K-Editor
+	url = https://github.com/rafal-tarnow/K-Editor

@@ -6,6 +6,6 @@ set(CMAKE_CXX_STANDARD 23)
 add_library(parser STATIC Parser.cpp
         ParsingResult.h)
 
-add_executable(cli ParserCLI.cpp)
+add_executable(parser-cli ParserCLI.cpp)
 
-target_link_libraries(cli PRIVATE parser)
+target_link_libraries(parser-cli PRIVATE parser)
