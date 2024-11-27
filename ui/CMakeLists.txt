@@ -17,6 +17,8 @@ add_executable(RISCV-Simulator main.cpp
         MainWindow.cpp
         MainWindow.h
         resources/resources.qrc
+        ErrorParser.cpp
+        ErrorParser.h
 )
 
 add_subdirectory(lib/K-Editor)
@@ -29,6 +31,8 @@ target_link_libraries(RISCV-Simulator
         Qt::Gui
         Qt::Widgets
         K-Editor-lib
+        simulator
+        parser
 )
 
 if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)

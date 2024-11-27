@@ -19,10 +19,11 @@ enum class ParsingError : uint8_t
     IMMEDIATE_OUT_OF_BOUNDS = 7,
     INVALID_OFFSET_FORMAT = 8,
     INVALID_IMMEDIATE_FORMAT = 9,
-    OPCODE_NOT_FOUND = 10
+    OPCODE_NOT_FOUND = 10,
+    EMPTY_INPUT = 11
 };
 
-constexpr std::string_view toString(ParsingError error)
+constexpr std::string_view toString(const ParsingError error)
 {
     switch (error) {
     case ParsingError::NONE:
@@ -52,13 +53,12 @@ constexpr std::string_view toString(ParsingError error)
     }
 }
 
-inline std::ostream& operator<<(std::ostream& os, ParsingError error) { return os << toString(error); }
+inline std::ostream& operator<<(std::ostream& os, const ParsingError error) { return os << toString(error); }
 
 struct ParsingResult
 {
     bool success;
     vector<uint32_t> instructions;
-    string errorInstruction;
     int errorLine;
     ParsingError errorType;
 };

@@ -11,7 +11,7 @@ public:
     Memory();
     explicit Memory(uint32_t size);
     ~Memory() = default;
-    vector<uint32_t>* GetMemory();
+    vector<uint32_t> GetMemory();
     uint32_t Read(uint32_t address) const;
     uint16_t ReadHalfWord(uint32_t address) const;
     uint8_t ReadByte(uint32_t address) const;

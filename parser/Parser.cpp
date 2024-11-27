@@ -30,6 +30,9 @@ ParsingResult Parser::Parse(const vector<string>& instructions)
     vector<uint32_t> parsedInstructions;
     for (int i = 0; i < instructions.size(); i++) {
         string instruction = instructions[i];
+        if (RemoveSpaces(instruction).empty()) {
+            continue;
+        }
 
         while (instruction[0] == ' ') {
             instruction.erase(0, 1);
@@ -47,17 +50,21 @@ ParsingResult Parser::Parse(const vector<string>& instructions)
         string opcode = ToLowerCase(instruction.substr(0, index));
         string operands = ToLowerCase(RemoveSpaces(instruction.substr(index + 1)));
         if (opcode.size() < 2 || opcode.size() > 6 || operands.empty()) {
-            return ParsingResult{false, parsedInstructions, instruction, i, ParsingError::INVALID_OPCODE};
+            return ParsingResult{false, parsedInstructions, i, ParsingError::INVALID_OPCODE};
         }
 
         auto [parsedInstruction, parsingError] = ParseInstruction(opcode, operands);
         if (ParsingError::NONE != parsingError) {
-            return ParsingResult{false, parsedInstructions, instruction, i, parsingError};
+            return ParsingResult{false, parsedInstructions, i, parsingError};
         }
 
         parsedInstructions.push_back(parsedInstruction);
     }
-    return ParsingResult{true, parsedInstructions, "", -1, ParsingError::NONE};
+    if (parsedInstructions.size() == 0) {
+        return ParsingResult{false, parsedInstructions, 0, ParsingError::EMPTY_INPUT};
+    }
+
+    return ParsingResult{true, parsedInstructions, -1, ParsingError::NONE};
 }
 
 std::pair<uint32_t, ParsingError> Parser::ParseInstruction(const string& opcode, const string& operands)

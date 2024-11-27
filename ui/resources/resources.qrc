@@ -1,5 +1,8 @@
 <RCC>
     <qresource prefix="/">
         <file>styles/drakula.xml</file>
+        <file>images/stop.png</file>
+        <file>images/forward.png</file>
+        <file>images/fast_forward.png</file>
     </qresource>
 </RCC>

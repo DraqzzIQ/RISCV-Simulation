@@ -17,7 +17,9 @@ public:
     void SetInstructions(const vector<uint32_t>& instructions) const;
     ExecutionResult Step() const;
     CpuStatus GetCpuStatus() const;
+    vector<uint32_t> GetMemory() const;
     void ResizeMemory(uint32_t size) const;
+    void Reset() const;
 
 private:
     Memory* m_memory;

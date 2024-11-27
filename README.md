@@ -11,4 +11,4 @@ The instruction sets implemented are:
 ## Dependencies
 
 - [Qt](https://www.qt.io/) toolkit
-- [QCodeEditor](https://github.com/Megaxela/QCodeEditor) widget
+- [QCodeEditor](https://github.com/rafal-tarnow/K-Editor) widget

@@ -5,6 +5,7 @@
 #include <QCodeEditor>
 #include <QGLSLHighlighter>
 #include <QSyntaxStyle>
+#include "QLuaCompleter.hpp"
 
 // Qt
 #include <QApplication>
@@ -13,17 +14,25 @@
 #include <QLabel>
 #include <QMenuBar>
 #include <QMessageBox>
+#include <QPushButton>
 #include <QScrollArea>
+#include <QShortcut>
 #include <QStyleHints>
+#include <QToolBar>
 #include <QVBoxLayout>
 
-#include "QLuaCompleter.hpp"
+#include "../parser/Parser.h"
+#include "../parser/ParsingResult.h"
+#include "../simulator/CPUUtil.h"
+#include "../simulator/Simulator.h"
+#include "ErrorParser.h"
 
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent), m_setupLayout(nullptr), m_themeCombobox(nullptr), m_codeEditor(nullptr), m_completer(nullptr),
-    m_highlighter(nullptr), m_saveAction(nullptr), m_openAction(nullptr), m_pcValue(nullptr),
-    m_registerFormatComboBox(nullptr)
+    m_highlighter(nullptr), m_file(nullptr), m_saveAction(nullptr), m_openAction(nullptr), m_spacer(nullptr),
+    m_pcValue(nullptr), m_registerFormatComboBox(nullptr), m_memoryLayout(nullptr), m_memoryFormatComboBox(nullptr),
+    m_monoFont(new QFont("Courier", 11)), m_simulator(nullptr), m_running(false), m_speed(1000)
 {
     initData();
     createWidgets();
@@ -40,6 +49,11 @@ void MainWindow::initData()
     m_highlighter = new QCXXHighlighter;
     m_themes = {{"light", QSyntaxStyle::defaultStyle()}};
     m_completer = new QLuaCompleter(this);
+    m_registerMap = vector<QLineEdit*>(32);
+    m_memoryLayout = new QVBoxLayout;
+    m_spacer = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
+    m_simulator = new Simulator;
+    m_registerData = m_simulator->GetCpuStatus().registers;
 
     loadStyle(":/styles/drakula.xml");
 }
@@ -79,12 +93,15 @@ void MainWindow::createWidgets()
     setMenuBar(menuBar);
 
     QMenu* fileMenu = menuBar->addMenu("File");
+    m_saveAsAction = fileMenu->addAction("Save As");
     m_saveAction = fileMenu->addAction("Save");
     m_openAction = fileMenu->addAction("Open");
 
     QMenu* viewMenu = menuBar->addMenu("View");
     viewMenu->addAction("Increase Font Size", this, &MainWindow::increaseFontSize);
     viewMenu->addAction("Decrease Font Size", this, &MainWindow::decreaseFontSize);
+
+    createToolbar();
 
     // Theme selection
     const auto themeWidget = new QWidget(menuBar);
@@ -98,6 +115,7 @@ void MainWindow::createWidgets()
     // Layout
     const auto container = new QWidget(this);
     setCentralWidget(container);
+
     const auto mainLayout = new QHBoxLayout;
 
     // Registers
@@ -111,7 +129,7 @@ void MainWindow::createWidgets()
 
     // Memory
     QWidget* memoryPanel = createMemoryPane();
-    memoryPanel->setFixedWidth(320);
+    memoryPanel->setFixedWidth(300);
     mainLayout->addWidget(memoryPanel);
 
     container->setLayout(mainLayout);
@@ -168,8 +186,7 @@ QWidget* MainWindow::createRegisterPane()
     scrollLayout->addLayout(regLayout);
 
     // push content up
-    const auto spacer = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    scrollLayout->addSpacerItem(spacer);
+    scrollLayout->addSpacerItem(m_spacer);
 
     // Set up scrollable content
     scrollContent->setLayout(scrollLayout);
@@ -198,40 +215,13 @@ QWidget* MainWindow::createMemoryPane()
     // Create a scrollable area for memory content
     const auto scrollArea = new QScrollArea;
     const auto memContentWidget = new QWidget;
-    const auto memLayout = new QVBoxLayout;
 
-    // Generate example memory data (using std::vector<uint32_t>)
-    m_memoryData = generateMemoryData();
+    m_memoryData = m_simulator->GetMemory();
 
-    // Displaying memory addresses and values
-    const int memorySize = m_memoryData.size();
-    QMap<int, QLineEdit*> memoryMap;
-
-    for (int i = 0; i < memorySize; i++) {
-        // Get the memory address as a hexadecimal string
-        QString addressText = QString("%1").arg(i * 4, 8, 16, QChar('0')); // i * 4 for byte addressing
-
-        // Split uint32_t into uint8_t values (4 bytes)
-        const uint32_t value = m_memoryData[i];
-        QString memoryRowText = addressText + "  "; // Start with the address
-
-        // Group the bytes (4 bytes = 32 bits)
-        for (int j = 0; j < 4; j++) {
-            const uint8_t byteValue = (value >> (8 * j)) & 0xFF;
-            memoryRowText += QString("%1 ").arg(byteValue, 2, 16, QChar('0')); // Add each byte as hex
-        }
-
-        // Create a label to display the address and grouped bytes
-        const auto memoryRowLabel = new QLabel(memoryRowText);
-        memoryRowLabel->setFont(*m_monoFont);
-        memLayout->addWidget(memoryRowLabel);
-    }
-    // push content up
-    const auto spacer = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
-    memLayout->addSpacerItem(spacer);
+    updateMemoryWithFormat(m_registerFormatComboBox->currentText());
 
     // Set up scrollable content for memory
-    memContentWidget->setLayout(memLayout);
+    memContentWidget->setLayout(m_memoryLayout);
     scrollArea->setWidget(memContentWidget);
     scrollArea->setWidgetResizable(true);
 
@@ -273,28 +263,61 @@ void MainWindow::setupWidgets()
 
 void MainWindow::performConnections()
 {
-    connect(m_memoryFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateMemoryFormat);
-    connect(m_registerFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateRegisterFormat);
+    connect(m_runButton, &QPushButton::clicked, this, &MainWindow::run);
+    connect(m_stepButton, &QPushButton::clicked, this, &MainWindow::step);
+    connect(m_stopButton, &QPushButton::clicked, this, &MainWindow::stop);
+    connect(new QShortcut(QKeySequence("Ctrl+S"), this), &QShortcut::activated, this, &MainWindow::saveFile);
+    connect(m_memoryFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateMemoryWithFormat);
+    connect(m_registerFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateRegisterWithFormat);
+    connect(m_saveAsAction, &QAction::triggered, this, &MainWindow::saveAsFile);
     connect(m_saveAction, &QAction::triggered, this, &MainWindow::saveFile);
     connect(m_openAction, &QAction::triggered, this, &MainWindow::openFile);
     connect(m_themeCombobox, QOverload<int>::of(&QComboBox::currentIndexChanged),
             [this](const int index) { m_codeEditor->setSyntaxStyle(m_themes[index].second); });
 }
 
-void MainWindow::saveFile()
+void MainWindow::saveAsFile()
 {
-    const QString fileName = QFileDialog::getSaveFileName(this, "Save File", "", "Text Files (*.txt);;All Files (*)");
+    const QString fileName = QFileDialog::getOpenFileName(this, "Save File", "", "Text Files (*.txt);;All Files (*)");
     if (fileName.isEmpty()) {
         return;
     }
-    QFile file(fileName);
-    if (!file.open(QIODevice::WriteOnly)) {
-        QMessageBox::information(this, tr("Unable to open file"), file.errorString());
-        return;
+    if (m_file == nullptr) {
+        m_file = new QFile(fileName);
     }
-    QTextStream out(&file);
+    else {
+        m_file->close();
+        m_file->setFileName(fileName);
+        if (!m_file->open(QIODevice::ReadWrite)) {
+            QMessageBox::information(this, tr("Unable to open file"), m_file->errorString());
+            return;
+        }
+    }
+
+    QTextStream out(m_file);
+    m_file->resize(0);
     out << m_codeEditor->toPlainText();
-    file.close();
+}
+
+void MainWindow::saveFile()
+{
+    if (m_file == nullptr) {
+        const QString fileName =
+            QFileDialog::getSaveFileName(this, "Save File", "", "Text Files (*.txt);;All Files (*)");
+        if (fileName.isEmpty()) {
+            return;
+        }
+
+        m_file = new QFile(fileName);
+        if (!m_file->open(QIODevice::ReadWrite)) {
+            QMessageBox::information(this, tr("Unable to open file"), m_file->errorString());
+            return;
+        }
+    }
+
+    QTextStream out(m_file);
+    m_file->resize(0);
+    out << m_codeEditor->toPlainText();
 }
 
 void MainWindow::openFile()
@@ -303,21 +326,94 @@ void MainWindow::openFile()
     if (fileName.isEmpty()) {
         return;
     }
-    QFile file(fileName);
-    if (!file.open(QIODevice::ReadOnly)) {
-        QMessageBox::information(this, tr("Unable to open file"), file.errorString());
-        return;
+    if (m_file == nullptr) {
+        m_file = new QFile(fileName);
     }
-    QTextStream in(&file);
+    else {
+        m_file->close();
+        m_file->setFileName(fileName);
+        if (!m_file->open(QIODevice::ReadWrite)) {
+            QMessageBox::information(this, tr("Unable to open file"), m_file->errorString());
+            return;
+        }
+    }
+
+    QTextStream in(m_file);
     const QString text = in.readAll();
     m_codeEditor->setPlainText(text);
-    file.close();
 }
 
-void MainWindow::updateRegisterWithFormat(const QString& format)
+void MainWindow::run()
 {
-    ensureMapCapacity(m_registerMap, m_registerData);
+    if (m_running) {
+        return;
+    }
+    m_simulator->Reset();
+    if (!parseAndSetInstructions()) {
+        return;
+    }
+    m_running = true;
 
+    while (m_running) {
+        const ExecutionResult result = m_simulator->Step();
+        if (!result.success) {
+            m_running = false;
+            if (result.error != ExecutionError::NONE && result.error != ExecutionError::PC_OUT_OF_BOUNDS) {
+                errorPopup(ErrorParser::ParseError(result.error, result.pc));
+            }
+            return;
+        }
+        setResult(result);
+
+        m_mutex.lock();
+        m_waitCondition.wait(&m_mutex, m_speed);
+        m_mutex.unlock();
+    }
+}
+void MainWindow::step()
+{
+    if (m_running) {
+        return;
+    }
+    if (!parseAndSetInstructions()) {
+        return;
+    }
+
+    const ExecutionResult result = m_simulator->Step();
+    if (!result.success) {
+        errorPopup(ErrorParser::ParseError(result.error, result.pc));
+        return;
+    }
+    setResult(result);
+}
+
+void MainWindow::stop()
+{
+    if (!m_running) {
+        return;
+    }
+    m_running = false;
+
+    m_waitCondition.wakeAll();
+
+    m_simulator->Reset();
+}
+
+void MainWindow::setResult(const ExecutionResult& result)
+{
+    // Update the register and memory values
+    if (result.registerChanged) {
+        m_registerData[result.registerChange.reg] = result.registerChange.value;
+        updateRegisterWithFormat(m_registerFormatComboBox->currentText());
+    }
+    else if (result.memoryChanged) {
+        m_memoryData[result.memoryChange.address] = result.memoryChange.value;
+        updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
+    }
+}
+
+void MainWindow::updateRegisterWithFormat(const QString& format) const
+{
     const bool toHex = (format == "Hexadecimal");
 
     // pc
@@ -326,7 +422,7 @@ void MainWindow::updateRegisterWithFormat(const QString& format)
 
     // registers
     for (int i = 0; i < 32; i++) {
-        const int regValueInt = m_registerMap[i]->text().toInt(nullptr, toHex ? 16 : 10);
+        const int regValueInt = m_registerData[i];
         m_registerMap[i]->setText(toHex ? QString("%1").arg(regValueInt, 8, 16, QChar('0'))
                                         : QString::number(regValueInt));
     }
@@ -334,54 +430,63 @@ void MainWindow::updateRegisterWithFormat(const QString& format)
 
 void MainWindow::updateMemoryWithFormat(const QString& format)
 {
-    ensureMapCapacity(m_memoryMap, m_memoryData);
+    ensureMemoryMapCapacity();
 
     const bool toHex = (format == "Hexadecimal");
 
-    for (const auto& memValue : m_memoryMap) {
-        const int byteValueInt = memValue->text().toInt(nullptr, toHex ? 16 : 10);
-        memValue->setText(toHex ? QString("%1").arg(byteValueInt, 2, 16, QChar('0')) : QString::number(byteValueInt));
+    for (int i = 0; i < m_memoryData.size(); i++) {
+        // Get the memory address as a hexadecimal string
+        QString addressText = QString("%1:").arg(i * 4, 8, 16, QChar('0')); // i * 4 for byte addressing
+
+        const uint32_t value = m_memoryData[i];
+        QString memoryRowText = addressText + "  ";
+
+        // Group the bytes (4 bytes = 32 bits)
+        for (int j = 0; j < 4; j++) {
+            const uint8_t byteValue = (value >> (8 * j)) & 0xFF;
+            memoryRowText += (toHex ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
+                                    : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
+        }
+        m_memoryMap[i]->setText(memoryRowText);
     }
 }
 
-void MainWindow::ensureMapCapacity(vector<QLineEdit*>& map, const vector<uint32_t>& data)
+void MainWindow::ensureMemoryMapCapacity()
 {
-    const int sizeDiff = map.size() - data.size();
+    const int sizeDiff = m_memoryMap.size() - m_memoryData.size();
+    if (sizeDiff == 0) {
+        return;
+    }
+    m_memoryLayout->removeItem(m_spacer);
+
     if (sizeDiff > 0) {
-        for (int i = map.size() - 1; i > map.size() - sizeDiff; i--) {
-            delete map[i];
-            map.pop_back();
+        for (int i = m_memoryMap.size() - 1; i > m_memoryMap.size() - sizeDiff; i--) {
+            m_memoryLayout->removeWidget(m_memoryMap[i]);
+            delete m_memoryMap[i];
+            m_memoryMap.pop_back();
         }
     }
     else if (sizeDiff < 0) {
-        map.reserve(data.size());
-        for (int i = map.size(); i < data.size(); i++) {
-            auto memValue = new QLineEdit("");
+        m_memoryMap.reserve(m_memoryData.size());
+        for (int i = m_memoryMap.size(); i < m_memoryData.size(); i++) {
+            auto memValue = new QLabel("");
             memValue->setFont(*m_monoFont);
-            memValue->setReadOnly(true);
-            map.push_back(memValue);
+            m_memoryLayout->addWidget(memValue);
+            m_memoryMap.push_back(memValue);
         }
     }
+
+    m_memoryLayout->addItem(m_spacer);
 }
 
-std::vector<uint32_t> MainWindow::generateMemoryData()
-{
-    constexpr uint32_t memorySize = 256;
-    std::vector<uint32_t> data;
-    for (int i = 0; i < memorySize; i++) {
-        data.push_back(0);
-    }
-    return data;
-}
-
-void MainWindow::increaseFontSize()
+void MainWindow::increaseFontSize() const
 {
     QFont font = m_codeEditor->font();
     font.setPointSize(font.pointSize() + 1);
     m_codeEditor->setFont(font);
 }
 
-void MainWindow::decreaseFontSize()
+void MainWindow::decreaseFontSize() const
 {
     QFont font = m_codeEditor->font();
     font.setPointSize(font.pointSize() - 1);
@@ -401,4 +506,72 @@ void MainWindow::wheelEvent(QWheelEvent* event)
     else {
         event->ignore();
     }
+}
+
+void MainWindow::errorPopup(const string& message) const
+{
+    QMessageBox msgBox;
+    msgBox.setText(QString::fromStdString(message));
+    msgBox.exec();
+}
+
+bool MainWindow::parseAndSetInstructions() const
+{
+    QStringList lines = m_codeEditor->toPlainText().split('\n');
+    std::vector<std::string> stdLines;
+    stdLines.reserve(lines.size());
+    for (const QString& line : lines) {
+        stdLines.push_back(line.toStdString());
+    }
+    const ParsingResult result = Parser::Parse(stdLines);
+    if (!result.success) {
+        errorPopup(ErrorParser::ParseError(result.errorType, result.errorLine));
+        return false;
+    }
+
+    m_simulator->SetInstructions(result.instructions);
+    return true;
+}
+
+void MainWindow::createToolbar()
+{
+    QToolBar* toolbar = addToolBar("Main");
+    toolbar->setMovable(false);
+
+    const auto centerContainer = new QWidget();
+    const auto layout = new QHBoxLayout();
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(10);
+
+    m_stopButton = new QPushButton();
+    m_stopButton->setIcon(QIcon(":/images/stop.png"));
+    m_stopButton->setIconSize(QSize(20, 20));
+    m_stopButton->setToolTip("Stop and reset the simulation");
+
+    m_stepButton = new QPushButton();
+    m_stepButton->setIcon(QIcon(":/images/forward.png"));
+    m_stepButton->setIconSize(QSize(20, 20));
+    m_stepButton->setToolTip("Step through the simulation");
+
+    m_runButton = new QPushButton();
+    m_runButton->setIcon(QIcon(":/images/fast_forward.png"));
+    m_runButton->setIconSize(QSize(20, 20));
+    m_runButton->setToolTip("Run the simulation");
+
+    layout->addWidget(m_stopButton);
+    layout->addWidget(m_stepButton);
+    layout->addWidget(m_runButton);
+
+    centerContainer->setLayout(layout);
+
+    // Add spacer widgets to toolbar for centering
+    const auto spacerLeft = new QWidget();
+    spacerLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    const auto spacerRight = new QWidget();
+    spacerRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+    toolbar->addWidget(spacerLeft);
+    toolbar->addWidget(centerContainer);
+    toolbar->addWidget(spacerRight);
 }
