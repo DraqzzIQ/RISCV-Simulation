@@ -13,7 +13,6 @@ CPU::~CPU() { delete m_registers; }
 void CPU::LoadInstructions(const std::vector<uint32_t>& instructions)
 {
     this->m_instructions = instructions;
-    Reset();
 }
 
 void CPU::Reset() const { m_registers->Reset(); }

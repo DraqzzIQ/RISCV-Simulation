@@ -120,7 +120,7 @@ void MainWindow::createWidgets()
 
     // Registers
     QWidget* memoryPane = createRegisterPane();
-    memoryPane->setFixedWidth(310);
+    memoryPane->setFixedWidth(330);
     mainLayout->addWidget(memoryPane);
 
     // CodeEditor
@@ -389,19 +389,27 @@ void MainWindow::step()
 
 void MainWindow::stop()
 {
-    if (!m_running) {
-        return;
-    }
     m_running = false;
 
     m_waitCondition.wakeAll();
 
+    reset();
+}
+
+void MainWindow::reset()
+{
     m_simulator->Reset();
+    m_pcData = 0;
+    m_registerData = m_simulator->GetCpuStatus().registers;
+    m_memoryData = m_simulator->GetMemory();
+    updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
+    updateRegisterWithFormat(m_registerFormatComboBox->currentText());
 }
 
 void MainWindow::setResult(const ExecutionResult& result)
 {
     // Update the register and memory values
+    m_pcData = result.pc;
     if (result.registerChanged) {
         m_registerData[result.registerChange.reg] = result.registerChange.value;
         updateRegisterWithFormat(m_registerFormatComboBox->currentText());
@@ -417,12 +425,12 @@ void MainWindow::updateRegisterWithFormat(const QString& format) const
     const bool toHex = (format == "Hexadecimal");
 
     // pc
-    const int pcValueInt = m_pcValue->text().toInt(nullptr, toHex ? 16 : 10);
+    const uint32_t pcValueInt = m_pcData;
     m_pcValue->setText(toHex ? QString("%1").arg(pcValueInt, 8, 16, QChar('0')) : QString::number(pcValueInt));
 
     // registers
     for (int i = 0; i < 32; i++) {
-        const int regValueInt = m_registerData[i];
+        const uint32_t regValueInt = m_registerData[i];
         m_registerMap[i]->setText(toHex ? QString("%1").arg(regValueInt, 8, 16, QChar('0'))
                                         : QString::number(regValueInt));
     }

@@ -54,6 +54,7 @@ private:
     void setResult(const ExecutionResult& result);
     bool parseAndSetInstructions() const;
     void createToolbar();
+    void reset();
 
     QHBoxLayout* m_setupLayout;
     QComboBox* m_themeCombobox;
@@ -71,6 +72,7 @@ private:
     QSpacerItem* m_spacer;
     vector<uint32_t> m_registerData;
     vector<QLineEdit*> m_registerMap;
+    uint32_t m_pcData;
     QLineEdit* m_pcValue;
     QComboBox* m_registerFormatComboBox;
     QVBoxLayout* m_memoryLayout;
