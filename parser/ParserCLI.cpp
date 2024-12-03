@@ -32,22 +32,21 @@ int main(const int argc, char* argv[])
         lines.push_back(line);
     }
     inputFile.close();
-    
+
     ParsingResult result = Parser::Parse(lines);
     if (!result.success) {
-        cout << "Line " << result.errorLine << ": Error while parsing instruction: " << result.errorInstruction << std::endl;
+        cout << "Line " << result.errorLine << ": Error while parsing instruction: " << lines[result.errorLine]
+             << std::endl;
         cout << "Error: " << result.errorType << std::endl;
         return 1;
     }
 
-    if(out.empty())
-    {
+    if (out.empty()) {
         for (const auto& instruction : result.instructions) {
             cout << std::bitset<32>(instruction) << std::endl;
         }
     }
-    else
-    {
+    else {
         std::ofstream outputFile(out);
         if (!outputFile) {
             std::cerr << "Error opening file: " << out << std::endl;

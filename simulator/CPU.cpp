@@ -10,10 +10,7 @@ CPU::CPU(Memory* memory) : m_memory(memory) { m_registers = new Registers(); }
 
 CPU::~CPU() { delete m_registers; }
 
-void CPU::LoadInstructions(const std::vector<uint32_t>& instructions)
-{
-    this->m_instructions = instructions;
-}
+void CPU::LoadInstructions(const std::vector<uint32_t>& instructions) { this->m_instructions = instructions; }
 
 void CPU::Reset() const { m_registers->Reset(); }
 
@@ -27,13 +24,17 @@ CpuStatus CPU::GetStatus() const
 
 ExecutionResult CPU::Step() const
 {
-    const uint32_t pc = m_registers->GetPC();
+    const uint32_t pc = m_registers->GetPC() / 4;
     if (pc >= m_instructions.size()) {
         return CPUUtil::ExecutionErrorResult(ExecutionError::PC_OUT_OF_BOUNDS);
     }
 
     const uint32_t instruction = m_instructions[pc];
     ExecutionResult result = ExecuteInstruction(instruction);
+    if (result.error != ExecutionError::NONE) {
+        result.errorInstruction = pc + 1;
+        Reset();
+    }
     result.pc = m_registers->GetPC();
     return result;
 }
@@ -349,12 +350,15 @@ ExecutionResult CPU::ExecuteBType(const uint32_t instruction) const
     const uint32_t imm4To1 = instruction >> 8 & 0b1111;
     const uint32_t imm11 = instruction >> 7 & 0b1;
 
-    int32_t imm = static_cast<int32_t>(0 | imm4To1 << 1 | imm10To5 << 5 | imm11 << 11 | imm12 << 12);
+    int32_t imm = imm12 << 12 | imm11 << 11 | imm10To5 << 5 | imm4To1 << 1 | 0;
+    if (imm >> 12) {
+        imm |= 0xFFFFE000;
+    }
     if (imm % 4 != 0) {
         // RISC-V instructions are 4-byte aligned
         return CPUUtil::ExecutionErrorResult(ExecutionError::OFFSET_NOT_32_BIT_ALIGNED);
     }
-    imm /= 4;
+
     const uint32_t val1 = m_registers->GetRegister(rs1);
     const uint32_t val2 = m_registers->GetRegister(rs2);
     const uint32_t pc = m_registers->GetPC();

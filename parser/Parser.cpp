@@ -50,12 +50,12 @@ ParsingResult Parser::Parse(const vector<string>& instructions)
         string opcode = ToLowerCase(instruction.substr(0, index));
         string operands = ToLowerCase(RemoveSpaces(instruction.substr(index + 1)));
         if (opcode.size() < 2 || opcode.size() > 6 || operands.empty()) {
-            return ParsingResult{false, parsedInstructions, i, ParsingError::INVALID_OPCODE};
+            return ParsingResult{false, parsedInstructions, i + 1, ParsingError::INVALID_OPCODE};
         }
 
         auto [parsedInstruction, parsingError] = ParseInstruction(opcode, operands);
         if (ParsingError::NONE != parsingError) {
-            return ParsingResult{false, parsedInstructions, i, parsingError};
+            return ParsingResult{false, parsedInstructions, i + 1, parsingError};
         }
 
         parsedInstructions.push_back(parsedInstruction);

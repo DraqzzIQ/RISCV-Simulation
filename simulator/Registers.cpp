@@ -17,7 +17,7 @@ void Registers::Reset()
 
 void Registers::SetPC(const uint32_t value) { m_registers[PC] = value; }
 
-void Registers::IncrementPC() { m_registers[PC]++; }
+void Registers::IncrementPC() { m_registers[PC] += 4; }
 
 uint32_t Registers::GetPC() const { return m_registers[PC]; }
 

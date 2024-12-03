@@ -43,6 +43,7 @@ struct ExecutionResult
     bool registerChanged;
     RegisterChange registerChange;
     uint32_t pc;
+    uint32_t errorInstruction;
 };
 
 

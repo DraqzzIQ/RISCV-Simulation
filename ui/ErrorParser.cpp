@@ -4,7 +4,7 @@
 
 string ErrorParser::ParseError(const ExecutionError error, const uint32_t instruction)
 {
-    const string line = "Error at line " + std::to_string(instruction >> 2) + ": ";
+    const string line = "Error at line " + std::to_string(instruction) + ": ";
 
     switch (error) {
     case ExecutionError::NONE:

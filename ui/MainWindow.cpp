@@ -18,6 +18,7 @@
 #include <QScrollArea>
 #include <QShortcut>
 #include <QStyleHints>
+#include <QTimer>
 #include <QToolBar>
 #include <QVBoxLayout>
 
@@ -381,7 +382,7 @@ void MainWindow::step()
 
     const ExecutionResult result = m_simulator->Step();
     if (!result.success) {
-        errorPopup(ErrorParser::ParseError(result.error, result.pc));
+        errorPopup(ErrorParser::ParseError(result.error, result.errorInstruction));
         return;
     }
     setResult(result);
@@ -410,13 +411,16 @@ void MainWindow::setResult(const ExecutionResult& result)
 {
     // Update the register and memory values
     m_pcData = result.pc;
+    highlightLineEdit(m_pcValue);
     if (result.registerChanged) {
         m_registerData[result.registerChange.reg] = result.registerChange.value;
         updateRegisterWithFormat(m_registerFormatComboBox->currentText());
+        highlightLineEdit(m_registerMap[result.registerChange.reg]);
     }
     else if (result.memoryChanged) {
         m_memoryData[result.memoryChange.address] = result.memoryChange.value;
         updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
+        highlightLabel(m_memoryMap[result.memoryChange.address]);
     }
 }
 
@@ -582,4 +586,16 @@ void MainWindow::createToolbar()
     toolbar->addWidget(spacerLeft);
     toolbar->addWidget(centerContainer);
     toolbar->addWidget(spacerRight);
+}
+
+void MainWindow::highlightLabel(QLabel* label) const
+{
+    label->setStyleSheet("color: green;");
+    QTimer::singleShot(300, [label]() { label->setStyleSheet(""); });
+}
+
+void MainWindow::highlightLineEdit(QLineEdit* lineEdit) const
+{
+    lineEdit->setStyleSheet("color: green;");
+    QTimer::singleShot(300, [lineEdit]() { lineEdit->setStyleSheet(""); });
 }
