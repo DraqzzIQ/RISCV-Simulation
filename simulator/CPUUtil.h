@@ -21,6 +21,8 @@ struct RegisterChange
 {
     uint8_t reg;
     uint32_t value;
+
+    bool operator==(const RegisterChange& other) const { return reg == other.reg && value == other.value; }
 };
 
 enum class ExecutionError

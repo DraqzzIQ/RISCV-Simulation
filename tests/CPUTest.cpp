@@ -1,7 +1,11 @@
 #include <bitset>
 #include <gtest/gtest.h>
 
+#include "../parser/Parser.h"
+#include "../simulator/CPU.h"
 #include "../simulator/CPUUtil.h"
+
+CPU cpu(new Memory());
 
 TEST(CPUTestSuite, GetFunct7)
 {
@@ -49,4 +53,32 @@ TEST(CPUTestSuite, GetImm20)
 {
     uint32_t instruction = 0b11111111100010000000000000000000;
     EXPECT_EQ(0b11111111100010000000, CPUUtil::GetImm20(instruction));
+}
+
+
+TEST(CPUTestSuite, Registers)
+{
+    cpu.Reset();
+    vector<string> strings = {"addi x0, x0, 10"};
+    for (int i = 1; i < 32; i++) {
+        strings.push_back("addi x" + std::to_string(i) + ", x" + std::to_string(i - 1) + ", 1");
+    }
+    vector<uint32_t> instructions = Parser::Parse(strings).instructions;
+    cpu.LoadInstructions(instructions);
+
+    auto result = cpu.Step();
+    EXPECT_EQ(result.error, ExecutionError::NONE);
+    EXPECT_EQ(result.pc, 4);
+    EXPECT_EQ(result.registerChanged, true);
+    RegisterChange expectedChange{0, 0};
+    EXPECT_EQ(result.registerChange, expectedChange);
+
+    for (uint8_t i = 1; i < 32; i++) {
+        result = cpu.Step();
+        EXPECT_EQ(result.error, ExecutionError::NONE);
+        EXPECT_EQ(result.pc, 4 + i * 4);
+        EXPECT_EQ(result.registerChanged, true);
+        RegisterChange expectedChange{i, i};
+        EXPECT_EQ(result.registerChange, expectedChange);
+    }
 }
