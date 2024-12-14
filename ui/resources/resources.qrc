@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
+        <file>languages/riscv-asm.xml</file>
         <file>styles/drakula.xml</file>
         <file>images/stop.png</file>
         <file>images/forward.png</file>

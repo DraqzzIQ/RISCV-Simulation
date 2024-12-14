@@ -19,6 +19,8 @@ add_executable(RISCV-Simulator main.cpp
         resources/resources.qrc
         ErrorParser.cpp
         ErrorParser.h
+        highlighters/QRiscvAsmHighlighter.cpp
+        completers/QRiscvAsmCompleter.cpp
 )
 
 add_subdirectory(lib/K-Editor)

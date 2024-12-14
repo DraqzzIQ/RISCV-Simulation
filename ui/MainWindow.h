@@ -55,8 +55,8 @@ private:
     bool parseAndSetInstructions() const;
     void createToolbar();
     void reset();
-    void highlightLabel(QLabel* label) const;
-    void highlightLineEdit(QLineEdit* lineEdit) const;
+    void highlightMemoryLabel(QLabel* label) const;
+    void highlightRegisterLineEdit(QLineEdit* lineEdit) const;
 
     QHBoxLayout* m_setupLayout;
     QComboBox* m_themeCombobox;

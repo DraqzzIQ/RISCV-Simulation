@@ -1,11 +1,8 @@
 #include "MainWindow.h"
 
 // QCodeEditor
-#include <QCXXHighlighter>
 #include <QCodeEditor>
-#include <QGLSLHighlighter>
 #include <QSyntaxStyle>
-#include "QLuaCompleter.hpp"
 
 // Qt
 #include <QApplication>
@@ -27,6 +24,8 @@
 #include "../simulator/CPUUtil.h"
 #include "../simulator/Simulator.h"
 #include "ErrorParser.h"
+#include "highlighters/QRiscvAsmHighlighter.h"
+#include "completers/QRiscvAsmCompleter.h"
 
 
 MainWindow::MainWindow(QWidget* parent) :
@@ -47,9 +46,9 @@ MainWindow::MainWindow(QWidget* parent) :
 
 void MainWindow::initData()
 {
-    m_highlighter = new QCXXHighlighter;
+    m_highlighter = new QRiscvAsmHighlighter;
     m_themes = {{"light", QSyntaxStyle::defaultStyle()}};
-    m_completer = new QLuaCompleter(this);
+    m_completer = new QRiscvAsmCompleter(this);
     m_registerMap = vector<QLineEdit*>(32);
     m_memoryLayout = new QVBoxLayout;
     m_spacer = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
@@ -371,6 +370,7 @@ void MainWindow::run()
         m_mutex.unlock();
     }
 }
+
 void MainWindow::step()
 {
     if (m_running) {
@@ -411,16 +411,16 @@ void MainWindow::setResult(const ExecutionResult& result)
 {
     // Update the register and memory values
     m_pcData = result.pc;
-    highlightLineEdit(m_pcValue);
+    highlightRegisterLineEdit(m_pcValue);
     if (result.registerChanged) {
         m_registerData[result.registerChange.reg] = result.registerChange.value;
         updateRegisterWithFormat(m_registerFormatComboBox->currentText());
-        highlightLineEdit(m_registerMap[result.registerChange.reg]);
+        highlightRegisterLineEdit(m_registerMap[result.registerChange.reg]);
     }
     else if (result.memoryChanged) {
         m_memoryData[result.memoryChange.address] = result.memoryChange.value;
         updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
-        highlightLabel(m_memoryMap[result.memoryChange.address]);
+        highlightMemoryLabel(m_memoryMap[result.memoryChange.address]);
     }
 }
 
@@ -435,8 +435,9 @@ void MainWindow::updateRegisterWithFormat(const QString& format) const
     // registers
     for (int i = 0; i < 32; i++) {
         const uint32_t regValueInt = m_registerData[i];
-        m_registerMap[i]->setText(toHex ? QString("%1").arg(regValueInt, 8, 16, QChar('0'))
-                                        : QString::number(regValueInt));
+        m_registerMap[i]->setText(toHex
+            ? QString("%1").arg(regValueInt, 8, 16, QChar('0'))
+            : QString::number(regValueInt));
     }
 }
 
@@ -456,8 +457,9 @@ void MainWindow::updateMemoryWithFormat(const QString& format)
         // Group the bytes (4 bytes = 32 bits)
         for (int j = 0; j < 4; j++) {
             const uint8_t byteValue = (value >> (8 * j)) & 0xFF;
-            memoryRowText += (toHex ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
-                                    : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
+            memoryRowText += (toHex
+                ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
+                : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
         }
         m_memoryMap[i]->setText(memoryRowText);
     }
@@ -588,13 +590,13 @@ void MainWindow::createToolbar()
     toolbar->addWidget(spacerRight);
 }
 
-void MainWindow::highlightLabel(QLabel* label) const
+void MainWindow::highlightMemoryLabel(QLabel* label) const
 {
     label->setStyleSheet("color: green;");
     QTimer::singleShot(300, [label]() { label->setStyleSheet(""); });
 }
 
-void MainWindow::highlightLineEdit(QLineEdit* lineEdit) const
+void MainWindow::highlightRegisterLineEdit(QLineEdit* lineEdit) const
 {
     lineEdit->setStyleSheet("color: green;");
     QTimer::singleShot(300, [lineEdit]() { lineEdit->setStyleSheet(""); });

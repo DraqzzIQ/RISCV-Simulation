@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<root>
+    <section name="Keyword">
+        <name>add</name>
+        <name>sub</name>
+        <name>sll</name>
+        <name>slt</name>
+        <name>sltu</name>
+        <name>xor</name>
+        <name>srl</name>
+        <name>sra</name>
+        <name>or</name>
+        <name>and</name>
+
+        <name>mul</name>
+        <name>mulh</name>
+        <name>mulhsu</name>
+        <name>mulhu</name>
+        <name>div</name>
+        <name>divu</name>
+        <name>rem</name>
+        <name>remu</name>
+
+        <name>addi</name>
+        <name>slli</name>
+        <name>slti</name>
+        <name>sltiu</name>
+        <name>xori</name>
+        <name>srli</name>
+        <name>srai</name>
+        <name>ori</name>
+        <name>andi</name>
+
+        <name>lb</name>
+        <name>lh</name>
+        <name>lw</name>
+        <name>lbu</name>
+        <name>lhu</name>
+
+        <name>sb</name>
+        <name>sh</name>
+        <name>sw</name>
+
+        <name>beq</name>
+        <name>bne</name>
+        <name>blt</name>
+        <name>bge</name>
+        <name>bltu</name>
+        <name>bgeu</name>
+
+        <name>jalr</name>
+
+        <name>ADD</name>
+        <name>SUB</name>
+        <name>SLL</name>
+        <name>SLT</name>
+        <name>SLTU</name>
+        <name>XOR</name>
+        <name>SRL</name>
+        <name>SRA</name>
+        <name>OR</name>
+        <name>AND</name>
+
+        <name>MUL</name>
+        <name>MULH</name>
+        <name>MULHSU</name>
+        <name>MULHU</name>
+        <name>DIV</name>
+        <name>DIVU</name>
+        <name>REM</name>
+        <name>REMU</name>
+
+        <name>ADDI</name>
+        <name>SLLI</name>
+        <name>SLTI</name>
+        <name>SLTIU</name>
+        <name>XORI</name>
+        <name>SRLI_SRAI</name>
+        <name>ORI</name>
+        <name>ANDI</name>
+
+        <name>LB</name>
+        <name>LH</name>
+        <name>LW</name>
+        <name>LBU</name>
+        <name>LHU</name>
+
+        <name>SB</name>
+        <name>SH</name>
+        <name>SW</name>
+
+        <name>BEQ</name>
+        <name>BNE</name>
+        <name>BLT</name>
+        <name>BGE</name>
+        <name>BLTU</name>
+        <name>BGEU</name>
+
+        <name>JALR</name>
+    </section>
+</root>
