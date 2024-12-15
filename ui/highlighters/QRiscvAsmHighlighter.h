@@ -25,5 +25,5 @@ protected:
 
 private:
     QVector<QHighlightRule> m_highlightRules;
-    int m_executingLine = 0;
+    int m_executingLine = -1;
 };

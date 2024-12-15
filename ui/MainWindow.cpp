@@ -135,6 +135,49 @@ void MainWindow::createWidgets()
     container->setLayout(mainLayout);
 }
 
+void MainWindow::createToolbar()
+{
+    QToolBar* toolbar = addToolBar("Main");
+    toolbar->setMovable(false);
+
+    const auto centerContainer = new QWidget();
+    const auto layout = new QHBoxLayout();
+
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(10);
+
+    m_stopButton = new QPushButton();
+    m_stopButton->setIcon(QIcon(":/images/stop.png"));
+    m_stopButton->setIconSize(QSize(20, 20));
+    m_stopButton->setToolTip("Stop and reset the simulation");
+
+    m_stepButton = new QPushButton();
+    m_stepButton->setIcon(QIcon(":/images/forward.png"));
+    m_stepButton->setIconSize(QSize(20, 20));
+    m_stepButton->setToolTip("Step through the simulation");
+
+    m_runButton = new QPushButton();
+    m_runButton->setIcon(QIcon(":/images/fast_forward.png"));
+    m_runButton->setIconSize(QSize(20, 20));
+    m_runButton->setToolTip("Run the simulation");
+
+    layout->addWidget(m_stopButton);
+    layout->addWidget(m_stepButton);
+    layout->addWidget(m_runButton);
+
+    centerContainer->setLayout(layout);
+
+    // Add spacer widgets to toolbar for centering
+    const auto spacerLeft = new QWidget();
+    spacerLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    const auto spacerRight = new QWidget();
+    spacerRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
+    toolbar->addWidget(spacerLeft);
+    toolbar->addWidget(centerContainer);
+    toolbar->addWidget(spacerRight);
+}
+
 QWidget* MainWindow::createRegisterPane()
 {
     const auto registerWidget = new QWidget;
@@ -230,7 +273,6 @@ QWidget* MainWindow::createMemoryPane()
 
     return rightPane;
 }
-
 
 void MainWindow::setupWidgets()
 {
@@ -405,7 +447,7 @@ void MainWindow::reset()
     m_memoryData = m_simulator->GetMemory();
     updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
     updateRegisterWithFormat(m_registerFormatComboBox->currentText());
-    m_highlighter->highlightLine(0);
+    m_highlighter->highlightLine(-1);
 }
 
 void MainWindow::setResult(const ExecutionResult& result)
@@ -547,49 +589,6 @@ bool MainWindow::parseAndSetInstructions() const
 
     m_simulator->SetInstructions(result.instructions);
     return true;
-}
-
-void MainWindow::createToolbar()
-{
-    QToolBar* toolbar = addToolBar("Main");
-    toolbar->setMovable(false);
-
-    const auto centerContainer = new QWidget();
-    const auto layout = new QHBoxLayout();
-
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(10);
-
-    m_stopButton = new QPushButton();
-    m_stopButton->setIcon(QIcon(":/images/stop.png"));
-    m_stopButton->setIconSize(QSize(20, 20));
-    m_stopButton->setToolTip("Stop and reset the simulation");
-
-    m_stepButton = new QPushButton();
-    m_stepButton->setIcon(QIcon(":/images/forward.png"));
-    m_stepButton->setIconSize(QSize(20, 20));
-    m_stepButton->setToolTip("Step through the simulation");
-
-    m_runButton = new QPushButton();
-    m_runButton->setIcon(QIcon(":/images/fast_forward.png"));
-    m_runButton->setIconSize(QSize(20, 20));
-    m_runButton->setToolTip("Run the simulation");
-
-    layout->addWidget(m_stopButton);
-    layout->addWidget(m_stepButton);
-    layout->addWidget(m_runButton);
-
-    centerContainer->setLayout(layout);
-
-    // Add spacer widgets to toolbar for centering
-    const auto spacerLeft = new QWidget();
-    spacerLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    const auto spacerRight = new QWidget();
-    spacerRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-
-    toolbar->addWidget(spacerLeft);
-    toolbar->addWidget(centerContainer);
-    toolbar->addWidget(spacerRight);
 }
 
 void MainWindow::highlightMemoryLabel(QLabel* label) const
