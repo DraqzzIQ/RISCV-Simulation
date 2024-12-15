@@ -4,17 +4,16 @@
 #include <QCodeEditor>
 #include <QComboBox>
 #include <QFileDialog>
-#include <QFont>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
 #include <QMainWindow>
 #include <QMutex>
 #include <QString>
-#include <QVector>
 #include <QWaitCondition>
 
 #include "../simulator/Simulator.h"
+#include "highlighters/QRiscvAsmHighlighter.h"
 
 
 using std::string;
@@ -57,12 +56,13 @@ private:
     void reset();
     void highlightMemoryLabel(QLabel* label) const;
     void highlightRegisterLineEdit(QLineEdit* lineEdit) const;
+    int calculateErrorLine(int instruction) const;
 
     QHBoxLayout* m_setupLayout;
     QComboBox* m_themeCombobox;
     QCodeEditor* m_codeEditor;
     QCompleter* m_completer;
-    QStyleSyntaxHighlighter* m_highlighter;
+    QRiscvAsmHighlighter* m_highlighter;
     QVector<QPair<QString, QSyntaxStyle*>> m_themes;
     QFile* m_file;
     QAction* m_saveAsAction;

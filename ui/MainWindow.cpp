@@ -24,8 +24,8 @@
 #include "../simulator/CPUUtil.h"
 #include "../simulator/Simulator.h"
 #include "ErrorParser.h"
-#include "highlighters/QRiscvAsmHighlighter.h"
 #include "completers/QRiscvAsmCompleter.h"
+#include "highlighters/QRiscvAsmHighlighter.h"
 
 
 MainWindow::MainWindow(QWidget* parent) :
@@ -359,7 +359,7 @@ void MainWindow::run()
         if (!result.success) {
             m_running = false;
             if (result.error != ExecutionError::NONE && result.error != ExecutionError::PC_OUT_OF_BOUNDS) {
-                errorPopup(ErrorParser::ParseError(result.error, result.pc));
+                errorPopup(ErrorParser::ParseError(result.error, calculateErrorLine(result.pc)));
             }
             return;
         }
@@ -382,7 +382,7 @@ void MainWindow::step()
 
     const ExecutionResult result = m_simulator->Step();
     if (!result.success) {
-        errorPopup(ErrorParser::ParseError(result.error, result.errorInstruction));
+        errorPopup(ErrorParser::ParseError(result.error, calculateErrorLine(result.errorInstruction)));
         return;
     }
     setResult(result);
@@ -405,10 +405,14 @@ void MainWindow::reset()
     m_memoryData = m_simulator->GetMemory();
     updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
     updateRegisterWithFormat(m_registerFormatComboBox->currentText());
+    m_highlighter->highlightLine(0);
 }
 
 void MainWindow::setResult(const ExecutionResult& result)
 {
+    // Highlight executed instruction
+    m_highlighter->highlightLine(result.pc / 4);
+
     // Update the register and memory values
     m_pcData = result.pc;
     highlightRegisterLineEdit(m_pcValue);
@@ -435,9 +439,8 @@ void MainWindow::updateRegisterWithFormat(const QString& format) const
     // registers
     for (int i = 0; i < 32; i++) {
         const uint32_t regValueInt = m_registerData[i];
-        m_registerMap[i]->setText(toHex
-            ? QString("%1").arg(regValueInt, 8, 16, QChar('0'))
-            : QString::number(regValueInt));
+        m_registerMap[i]->setText(toHex ? QString("%1").arg(regValueInt, 8, 16, QChar('0'))
+                                        : QString::number(regValueInt));
     }
 }
 
@@ -457,9 +460,8 @@ void MainWindow::updateMemoryWithFormat(const QString& format)
         // Group the bytes (4 bytes = 32 bits)
         for (int j = 0; j < 4; j++) {
             const uint8_t byteValue = (value >> (8 * j)) & 0xFF;
-            memoryRowText += (toHex
-                ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
-                : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
+            memoryRowText += (toHex ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
+                                    : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
         }
         m_memoryMap[i]->setText(memoryRowText);
     }
@@ -539,7 +541,7 @@ bool MainWindow::parseAndSetInstructions() const
     }
     const ParsingResult result = Parser::Parse(stdLines);
     if (!result.success) {
-        errorPopup(ErrorParser::ParseError(result.errorType, result.errorLine));
+        errorPopup(ErrorParser::ParseError(result.errorType, calculateErrorLine(result.errorLine)));
         return false;
     }
 
@@ -600,4 +602,18 @@ void MainWindow::highlightRegisterLineEdit(QLineEdit* lineEdit) const
 {
     lineEdit->setStyleSheet("color: green;");
     QTimer::singleShot(300, [lineEdit]() { lineEdit->setStyleSheet(""); });
+}
+
+int MainWindow::calculateErrorLine(int instruction) const
+{
+    for (int i = 0; i < m_codeEditor->document()->blockCount(); i++) {
+        const auto block = m_codeEditor->document()->findBlockByLineNumber(i);
+        if (i >= instruction) {
+            break;
+        }
+        if (block.text() == "") {
+            instruction++;
+        }
+    }
+    return instruction;
 }

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QStyleSyntaxHighlighter>
 #include <QHighlightRule>
+#include <QStyleSyntaxHighlighter>
 
 #include <QRegularExpression>
 #include <QVector>
@@ -18,10 +18,12 @@ public:
      * @param document Pointer to document.
      */
     explicit QRiscvAsmHighlighter(QTextDocument* document = nullptr);
+    void highlightLine(int lineNumber);
 
 protected:
     void highlightBlock(const QString& text) override;
 
 private:
     QVector<QHighlightRule> m_highlightRules;
+    int m_executingLine = 0;
 };

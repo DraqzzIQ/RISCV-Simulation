@@ -1,5 +1,7 @@
 #include "ErrorParser.h"
 
+#include <QTextBlock>
+
 #include "../parser/ParsingResult.h"
 
 string ErrorParser::ParseError(const ExecutionError error, const uint32_t instruction)
