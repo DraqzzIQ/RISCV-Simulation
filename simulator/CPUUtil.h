@@ -21,6 +21,8 @@ struct RegisterChange
 {
     uint8_t reg;
     uint32_t value;
+
+    bool operator==(const RegisterChange& other) const { return reg == other.reg && value == other.value; }
 };
 
 enum class ExecutionError
@@ -43,6 +45,7 @@ struct ExecutionResult
     bool registerChanged;
     RegisterChange registerChange;
     uint32_t pc;
+    uint32_t errorInstruction;
 };
 
 

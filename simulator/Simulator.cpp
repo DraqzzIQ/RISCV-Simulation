@@ -24,4 +24,11 @@ ExecutionResult Simulator::Step() const { return m_cpu->Step(); }
 
 CpuStatus Simulator::GetCpuStatus() const { return m_cpu->GetStatus(); }
 
+vector<uint32_t> Simulator::GetMemory() const { return m_memory->GetMemory(); }
+
 void Simulator::ResizeMemory(const uint32_t size) const { m_memory->Resize(size); }
+void Simulator::Reset() const
+{
+    m_cpu->Reset();
+    m_memory->Reset();
+}
