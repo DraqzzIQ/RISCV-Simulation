@@ -12,7 +12,15 @@ uint8_t CPUUtil::GetRS2(const uint32_t instruction) { return static_cast<uint8_t
 
 uint32_t CPUUtil::GetImm20(const uint32_t instruction) { return instruction >> 12; }
 
-uint16_t CPUUtil::GetImm12(const uint32_t instruction) { return static_cast<uint16_t>(instruction >> 20); }
+int16_t CPUUtil::GetImm12(const uint32_t instruction)
+{
+    int32_t imm12 = static_cast<int32_t>(instruction) >> 20;
+    imm12 = imm12 & 0xFFF;
+    if (imm12 & 0x800) { // Check if sign bit (bit 11) is set
+        imm12 |= 0xFFFFF000; // Sign-extend by setting upper 20 bits to 1
+    }
+    return imm12;
+}
 
 uint8_t CPUUtil::GetImm5(const uint32_t instruction) { return static_cast<uint8_t>((instruction >> 20) & 0x1F); }
 

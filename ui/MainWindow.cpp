@@ -7,7 +7,6 @@
 // Qt
 #include <QApplication>
 #include <QComboBox>
-#include <QFile>
 #include <QLabel>
 #include <QMenuBar>
 #include <QMessageBox>
@@ -18,6 +17,7 @@
 #include <QTimer>
 #include <QToolBar>
 #include <QVBoxLayout>
+#include <iostream>
 
 #include "../parser/Parser.h"
 #include "../parser/ParsingResult.h"
@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent), m_setupLayout(nullptr), m_themeCombobox(nullptr), m_codeEditor(nullptr), m_completer(nullptr),
     m_highlighter(nullptr), m_file(nullptr), m_saveAction(nullptr), m_openAction(nullptr), m_spacer(nullptr),
     m_pcValue(nullptr), m_registerFormatComboBox(nullptr), m_memoryLayout(nullptr), m_memoryFormatComboBox(nullptr),
-    m_monoFont(new QFont("Courier", 11)), m_simulator(nullptr), m_running(false), m_speed(1000)
+    m_monoFont(new QFont("Courier", 11)), m_simulator(nullptr), m_running(false), m_speed(1000), m_simulationThread(nullptr)
 {
     initData();
     createWidgets();
@@ -53,7 +53,7 @@ void MainWindow::initData()
     m_memoryLayout = new QVBoxLayout;
     m_spacer = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
     m_simulator = new Simulator;
-    m_registerData = m_simulator->GetCpuStatus().registers;
+    m_registerData = vector<int32_t>(32);
 
     loadStyle(":/styles/drakula.xml");
 }
@@ -161,9 +161,16 @@ void MainWindow::createToolbar()
     m_runButton->setIconSize(QSize(20, 20));
     m_runButton->setToolTip("Run the simulation");
 
+    m_speedSlider = new QSlider(Qt::Horizontal);
+    m_speedSlider->setRange(50, 3000);
+    m_speedSlider->setValue(m_speed);
+    m_speedSlider->setToolTip("Set execution speed (ms)");
+
     layout->addWidget(m_stopButton);
     layout->addWidget(m_stepButton);
     layout->addWidget(m_runButton);
+    layout->addWidget(new QLabel("Speed:"));
+    layout->addWidget(m_speedSlider);
 
     centerContainer->setLayout(layout);
 
@@ -308,6 +315,7 @@ void MainWindow::performConnections()
     connect(m_runButton, &QPushButton::clicked, this, &MainWindow::run);
     connect(m_stepButton, &QPushButton::clicked, this, &MainWindow::step);
     connect(m_stopButton, &QPushButton::clicked, this, &MainWindow::stop);
+    connect(m_speedSlider, &QSlider::valueChanged, this, &MainWindow::setSpeed);
     connect(new QShortcut(QKeySequence("Ctrl+S"), this), &QShortcut::activated, this, &MainWindow::saveFile);
     connect(m_memoryFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateMemoryWithFormat);
     connect(m_registerFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateRegisterWithFormat);
@@ -385,32 +393,31 @@ void MainWindow::openFile()
     m_codeEditor->setPlainText(text);
 }
 
+void MainWindow::setSpeed(const int speed)
+{
+    m_speed = 3050 - speed;
+    if (m_simulationThread) {
+        m_simulationThread->setSpeed(m_speed);
+    }
+}
+
 void MainWindow::run()
 {
-    if (m_running) {
-        return;
-    }
-    m_simulator->Reset();
     if (!parseAndSetInstructions()) {
         return;
     }
-    m_running = true;
-
-    while (m_running) {
-        const ExecutionResult result = m_simulator->Step();
-        if (!result.success) {
-            m_running = false;
-            if (result.error != ExecutionError::NONE && result.error != ExecutionError::PC_OUT_OF_BOUNDS) {
-                errorPopup(ErrorParser::ParseError(result.error, calculateErrorLine(result.pc)));
-            }
-            return;
-        }
-        setResult(result);
-
-        m_mutex.lock();
-        m_waitCondition.wait(&m_mutex, m_speed);
-        m_mutex.unlock();
+    
+    if (m_running) {
+        return;
     }
+
+    m_simulationThread = new SimulationThread(m_simulator, this, m_speed);
+    connect(m_simulationThread, &SimulationThread::resultReady, this, &MainWindow::setResult);
+    connect(m_simulationThread, &SimulationThread::errorOccurred, this, &MainWindow::executionError);
+    connect(m_simulationThread, &QThread::finished, m_simulationThread, &QObject::deleteLater);
+
+    m_simulationThread->start();
+    m_running = true;
 }
 
 void MainWindow::step()
@@ -432,10 +439,12 @@ void MainWindow::step()
 
 void MainWindow::stop()
 {
+    if (m_simulationThread) {
+        m_simulationThread->stop();
+        m_simulationThread->wait();
+        m_simulationThread = nullptr;
+    }
     m_running = false;
-
-    m_waitCondition.wakeAll();
-
     reset();
 }
 
@@ -443,23 +452,29 @@ void MainWindow::reset()
 {
     m_simulator->Reset();
     m_pcData = 0;
-    m_registerData = m_simulator->GetCpuStatus().registers;
+    m_registerData = std::vector<int32_t>(32);
     m_memoryData = m_simulator->GetMemory();
     updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
     updateRegisterWithFormat(m_registerFormatComboBox->currentText());
     m_highlighter->highlightLine(-1);
 }
 
+void MainWindow::executionError(const ExecutionResult& error)
+{
+    errorPopup(ErrorParser::ParseError(error.error, calculateErrorLine(error.errorInstruction)));
+    m_running = false;
+}
+
 void MainWindow::setResult(const ExecutionResult& result)
 {
     // Highlight executed instruction
-    m_highlighter->highlightLine(result.pc / 4);
+    m_highlighter->highlightLine(static_cast<int32_t>(result.pc) / 4);
 
     // Update the register and memory values
     m_pcData = result.pc;
     highlightRegisterLineEdit(m_pcValue);
     if (result.registerChanged) {
-        m_registerData[result.registerChange.reg] = result.registerChange.value;
+        m_registerData[result.registerChange.reg] = static_cast<int32_t>(result.registerChange.value);
         updateRegisterWithFormat(m_registerFormatComboBox->currentText());
         highlightRegisterLineEdit(m_registerMap[result.registerChange.reg]);
     }
@@ -480,8 +495,8 @@ void MainWindow::updateRegisterWithFormat(const QString& format) const
 
     // registers
     for (int i = 0; i < 32; i++) {
-        const uint32_t regValueInt = m_registerData[i];
-        m_registerMap[i]->setText(toHex ? QString("%1").arg(regValueInt, 8, 16, QChar('0'))
+        const int32_t regValueInt = m_registerData[i];
+        m_registerMap[i]->setText(toHex ? QString("%1").arg(static_cast<uint32_t>(regValueInt), 8, 16, QChar('0'))
                                         : QString::number(regValueInt));
     }
 }
@@ -524,7 +539,7 @@ void MainWindow::ensureMemoryMapCapacity()
             m_memoryMap.pop_back();
         }
     }
-    else if (sizeDiff < 0) {
+    else {
         m_memoryMap.reserve(m_memoryData.size());
         for (int i = m_memoryMap.size(); i < m_memoryData.size(); i++) {
             auto memValue = new QLabel("");

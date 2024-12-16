@@ -59,7 +59,7 @@ public:
     static uint8_t GetRS1(uint32_t instruction);
     static uint8_t GetRS2(uint32_t instruction);
     static uint32_t GetImm20(uint32_t instruction);
-    static uint16_t GetImm12(uint32_t instruction);
+    static int16_t GetImm12(uint32_t instruction);
     static uint8_t GetImm5(uint32_t instruction);
     static bool IsValidRegister(uint8_t reg);
     static ExecutionResult ExecutionErrorResult(ExecutionError error);
