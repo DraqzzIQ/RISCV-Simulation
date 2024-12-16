@@ -13,6 +13,7 @@
 #include <QWaitCondition>
 
 #include "../simulator/Simulator.h"
+#include "SimulationThread.h"
 #include "highlighters/QRiscvAsmHighlighter.h"
 
 
@@ -33,6 +34,7 @@ private slots:
     void run();
     void step();
     void stop();
+    void setSpeed(int speed);
 
 private:
     void loadStyle(const QString& path);
@@ -41,6 +43,7 @@ private:
     void createWidgets();
     QWidget* createRegisterPane();
     QWidget* createMemoryPane();
+    void createToolbar();
     void updateRegisterWithFormat(const QString& format) const;
     void updateMemoryWithFormat(const QString& format);
     void setupWidgets();
@@ -52,12 +55,13 @@ private:
     void errorPopup(const string& message) const;
     void setResult(const ExecutionResult& result);
     bool parseAndSetInstructions() const;
-    void createToolbar();
     void reset();
+    void executionError(const ExecutionResult& result);
     void highlightMemoryLabel(QLabel* label) const;
     void highlightRegisterLineEdit(QLineEdit* lineEdit) const;
     int calculateErrorLine(int instruction) const;
 
+    QSlider* m_speedSlider;
     QHBoxLayout* m_setupLayout;
     QComboBox* m_themeCombobox;
     QCodeEditor* m_codeEditor;
@@ -84,10 +88,9 @@ private:
     QFont* m_monoFont; // Monospace font for memory and register values
 
     Simulator* m_simulator;
-    QMutex m_mutex;
-    QWaitCondition m_waitCondition;
-    std::atomic<bool> m_running;
+    bool m_running;
     int m_speed;
+    SimulationThread* m_simulationThread;
 };
 
 
