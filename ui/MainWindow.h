@@ -72,7 +72,7 @@ private:
     QPushButton* m_stepButton;
     QPushButton* m_stopButton;
     QSpacerItem* m_spacer;
-    vector<uint32_t> m_registerData;
+    vector<int32_t> m_registerData;
     vector<QLineEdit*> m_registerMap;
     uint32_t m_pcData;
     QLineEdit* m_pcValue;

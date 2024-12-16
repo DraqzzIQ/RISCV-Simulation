@@ -48,6 +48,7 @@
         <name>bltu</name>
         <name>bgeu</name>
 
+        <name>jal</name>
         <name>jalr</name>
 
         <name>ADD</name>
@@ -96,6 +97,7 @@
         <name>BLTU</name>
         <name>BGEU</name>
 
+        <name>JAL</name>
         <name>JALR</name>
     </section>
 </root>

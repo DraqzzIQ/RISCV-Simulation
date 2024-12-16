@@ -18,6 +18,7 @@
 #include <QTimer>
 #include <QToolBar>
 #include <QVBoxLayout>
+#include <iostream>
 
 #include "../parser/Parser.h"
 #include "../parser/ParsingResult.h"
@@ -53,7 +54,7 @@ void MainWindow::initData()
     m_memoryLayout = new QVBoxLayout;
     m_spacer = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
     m_simulator = new Simulator;
-    m_registerData = m_simulator->GetCpuStatus().registers;
+    m_registerData = vector<int32_t>(32);
 
     loadStyle(":/styles/drakula.xml");
 }
@@ -443,7 +444,7 @@ void MainWindow::reset()
 {
     m_simulator->Reset();
     m_pcData = 0;
-    m_registerData = m_simulator->GetCpuStatus().registers;
+    m_registerData = std::vector<int32_t>(32);
     m_memoryData = m_simulator->GetMemory();
     updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
     updateRegisterWithFormat(m_registerFormatComboBox->currentText());
@@ -453,13 +454,13 @@ void MainWindow::reset()
 void MainWindow::setResult(const ExecutionResult& result)
 {
     // Highlight executed instruction
-    m_highlighter->highlightLine(result.pc / 4);
+    m_highlighter->highlightLine(static_cast<int32_t>(result.pc) / 4);
 
     // Update the register and memory values
     m_pcData = result.pc;
     highlightRegisterLineEdit(m_pcValue);
     if (result.registerChanged) {
-        m_registerData[result.registerChange.reg] = result.registerChange.value;
+        m_registerData[result.registerChange.reg] = static_cast<int32_t>(result.registerChange.value);
         updateRegisterWithFormat(m_registerFormatComboBox->currentText());
         highlightRegisterLineEdit(m_registerMap[result.registerChange.reg]);
     }
@@ -480,8 +481,8 @@ void MainWindow::updateRegisterWithFormat(const QString& format) const
 
     // registers
     for (int i = 0; i < 32; i++) {
-        const uint32_t regValueInt = m_registerData[i];
-        m_registerMap[i]->setText(toHex ? QString("%1").arg(regValueInt, 8, 16, QChar('0'))
+        const int32_t regValueInt = m_registerData[i];
+        m_registerMap[i]->setText(toHex ? QString("%1").arg(static_cast<uint32_t>(regValueInt), 8, 16, QChar('0'))
                                         : QString::number(regValueInt));
     }
 }
@@ -524,7 +525,7 @@ void MainWindow::ensureMemoryMapCapacity()
             m_memoryMap.pop_back();
         }
     }
-    else if (sizeDiff < 0) {
+    else {
         m_memoryMap.reserve(m_memoryData.size());
         for (int i = m_memoryMap.size(); i < m_memoryData.size(); i++) {
             auto memValue = new QLabel("");

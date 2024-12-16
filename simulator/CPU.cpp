@@ -183,7 +183,7 @@ ExecutionResult CPU::ExecuteIType(const uint32_t instruction) const
     if (!CPUUtil::IsValidRegister(rd) || !CPUUtil::IsValidRegister(rs1)) {
         return CPUUtil::ExecutionErrorResult(ExecutionError::INVALID_REGISTER);
     }
-    const int32_t immediate12 = CPUUtil::GetImm12(instruction);
+    const int16_t immediate12 = CPUUtil::GetImm12(instruction);
     const uint8_t immediate5 = CPUUtil::GetImm5(instruction);
 
     switch (CPUUtil::GetFunct3(instruction)) {
@@ -439,19 +439,22 @@ ExecutionResult CPU::ExecuteJALType(const uint32_t instruction) const
         return CPUUtil::ExecutionErrorResult(ExecutionError::INVALID_REGISTER);
     }
     const uint32_t imm20 = instruction >> 31;
-    const uint32_t imm10To1 = instruction >> 30 & 0b1111111111;
+    const uint32_t imm10To1 = instruction >> 21 & 0b1111111111;
     const uint32_t imm11 = instruction >> 20 & 0b1;
     const uint32_t imm19To12 = instruction >> 12 & 0b11111111;
-
-    const uint32_t pc = m_registers->GetPC();
     int32_t imm = static_cast<int32_t>(0 | imm10To1 << 1 | imm11 << 11 | imm19To12 << 12 | imm20 << 20);
+    // Sign-extend the immediate to 32 bits
+    if (imm20) { // If the sign bit is set, extend it
+        imm |= 0xFFF00000;
+    }
+
     if (imm % 4 != 0) {
         // RISC-V instructions are 4-byte aligned
         return CPUUtil::ExecutionErrorResult(ExecutionError::OFFSET_NOT_32_BIT_ALIGNED);
     }
-    imm /= 4;
 
-    m_registers->SetRegister(rd, pc + 1);
+    const uint32_t pc = m_registers->GetPC();
+    m_registers->SetRegister(rd, pc + 4);
     m_registers->SetPC(pc + imm);
 
     return {true, ExecutionError::NONE, false, {0, 0}, true, {rd, m_registers->GetRegister(rd)}};
@@ -465,14 +468,13 @@ ExecutionResult CPU::ExecuteJALRType(const uint32_t instruction) const
         return CPUUtil::ExecutionErrorResult(ExecutionError::INVALID_REGISTER);
     }
     const uint32_t pc = m_registers->GetPC();
-    int16_t imm = static_cast<int16_t>(CPUUtil::GetImm12(instruction));
+    const int16_t imm = CPUUtil::GetImm12(instruction);
     if (imm % 4 != 0) {
         // RISC-V instructions are 4-byte aligned
         return CPUUtil::ExecutionErrorResult(ExecutionError::OFFSET_NOT_32_BIT_ALIGNED);
     }
-    imm /= 4;
 
-    m_registers->SetRegister(rd, pc + 1);
+    m_registers->SetRegister(rd, pc + 4);
     m_registers->SetPC(m_registers->GetRegister(rs1) + imm);
 
     return {true, ExecutionError::NONE, false, {0, 0}, true, {rd, m_registers->GetRegister(rd)}};
