@@ -54,6 +54,9 @@ jobs:
       - name: Run tests
         run: ctest --test-dir build/tests --output-on-failure -C Release -V
 
+      - name: List files
+        run: ls -R
+
       - name: Linux AppImage
         if: matrix.os == 'ubuntu-latest'
         run: |
