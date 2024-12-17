@@ -65,7 +65,7 @@ jobs:
           wget -O deploy.AppImage https://github.com/probonopd/go-appimage/releases/download/continuous/appimagetool-860-x86_64.AppImage
           chmod +x deploy.AppImage
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${{ github.workspace }}/Qt/6.6.3/gcc_64/lib/
-          ./deploy.AppImage RISCV-Simulator -appimage -no-translations
+          ./deploy.AppImage -s deploy RISCV-Simulator
 
       - name: List files
         run: ls -R
