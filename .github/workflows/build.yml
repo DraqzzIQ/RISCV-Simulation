@@ -18,7 +18,7 @@ jobs:
           - os: macos-latest
             binary: build/ui/RISCV-Simulator
           - os: windows-latest
-            binary: RISCV-Simulation\build\ui\Release\RISCV-Simulator.exe
+            binary: build\ui\Release\RISCV-Simulator.exe
           - os: ubuntu-latest
             binary: build/ui/RISCV-Simulator
 
