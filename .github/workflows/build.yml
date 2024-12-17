@@ -93,7 +93,7 @@ jobs:
 
       - name: Windows qwindows.dll
         if: runner.os == 'Windows'
-        run: mkdir -p plugins/platforms && cp windows-latest/qwindows.dll plugins/platforms
+        run: mkdir -p windows-latest/plugins/platforms && mv windows-latest/qwindows.dll windows-latest/plugins/platforms
 
       - name: zip files
         run: zip -r macos-latest.zip macos-latest && zip -r windows-latest.zip windows-latest && zip -r ubuntu-latest.zip ubuntu-latest
