@@ -8,6 +8,8 @@ The instruction sets implemented are:
 - RV32I (except for the `ecall` and `ebreak` instructions)
 - RV32M
 
+See [here](https://msyksphinz-self.github.io/riscv-isadoc/html/index.html) for an overview
+
 ## Dependencies
 
 - [Qt](https://www.qt.io/) toolkit
