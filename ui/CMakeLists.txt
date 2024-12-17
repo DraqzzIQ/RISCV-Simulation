@@ -38,6 +38,11 @@ target_link_libraries(RISCV-Simulator
         parser
 )
 
+add_custom_command(TARGET RISCV-Simulator POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:RISCV-Simulator> $<TARGET_RUNTIME_DLLS:RISCV-Simulator>
+        COMMAND_EXPAND_LISTS
+)
+
 #if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 #    set(DEBUG_SUFFIX)
 #    if (MSVC AND CMAKE_BUILD_TYPE MATCHES "Debug")

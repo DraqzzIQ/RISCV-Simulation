@@ -40,6 +40,9 @@ jobs:
         with:
           version: '6.6.*'
 
+      - name: list qt files
+        run: ls -R build
+
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
@@ -49,7 +52,7 @@ jobs:
       - name: Run tests
         run: ctest --test-dir build/tests --output-on-failure -C Release -V
 
-      - name: list files
+      - name: list build files
         run: ls -R build
 
       - name: Upload build artifacts
@@ -85,6 +88,9 @@ jobs:
           PRERELEASE_SUFFIX: alpha
           DEFAULT_BUMP: minor
           VERBOSE: true
+
+      - name: List files
+        run: ls -R
 
       - name: Create Release
         id: create_release
