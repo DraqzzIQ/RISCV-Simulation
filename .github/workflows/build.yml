@@ -64,7 +64,6 @@ jobs:
           wget -O deploy.AppImage https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
           chmod +x deploy.AppImage
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${{ github.workspace }}/Qt/6.6.3/gcc_64/lib/
-          cp ${{ env.SOURCE_DIR }}/linux/* .
           ./deploy.AppImage RISCV-Simulator -appimage -no-translations
 
       - name: List files
