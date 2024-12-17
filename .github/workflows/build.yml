@@ -48,6 +48,7 @@ jobs:
           cp -r build/* release/
 
   release:
+    permissions: read-all
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
     needs: build
     runs-on: ubuntu-latest
