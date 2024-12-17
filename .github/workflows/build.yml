@@ -90,6 +90,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.release_tag.outputs.new_tag }}
-          artifacts: ./
+          artifacts: macos-latest, windows-latest, ubuntu-latest
           draft: false
           prerelease: ${{ steps.prerelease.outputs.prerelease }}
