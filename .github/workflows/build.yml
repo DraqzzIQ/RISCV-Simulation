@@ -98,7 +98,7 @@ jobs:
         run: ls -R
 
       - name: Windows qwindows.dll
-        run: mkdir -p windows/plugins/platforms && mv windows-latest/qwindows.dll windows/plugins/platforms
+        run: mkdir -p windows/plugins/platforms && mv windows-latest/Qt/6.6.3/msvc2019_64/plugins/platforms/qwindows.dll windows/plugins/platforms
 
       - name: Windows Qt6 dlls
         run: mv windows-latest/build/ui/Release/Qt6*.dll windows
