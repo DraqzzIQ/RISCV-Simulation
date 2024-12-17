@@ -13,7 +13,12 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
-add_executable(RISCV-Simulator main.cpp
+IF (WIN32)
+    SET(GUI_TYPE WIN32)
+ENDIF (WIN32)
+
+add_executable(RISCV-Simulator ${GUI_TYPE}
+        main.cpp
         MainWindow.cpp
         MainWindow.h
         resources/resources.qrc
