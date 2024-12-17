@@ -24,7 +24,7 @@ jobs:
               build\ui\Release\Qt6Gui.dll
               build\ui\Release\Qt6Widgets.dll
               D:\a\RISCV-Simulation\Qt\6.6.3\msvc2019_64\plugins\platforms\qwindows.dll
-          - os: ubuntu-latest
+          - os: ubuntu-20.04
             binary: build/ui/RISCV-Simulator.AppImage
 
     steps:
