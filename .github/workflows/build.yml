@@ -48,12 +48,16 @@ jobs:
           cp -r build/* release/
 
   release:
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
     needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+
+      - name: Determine if prerelease
+        id: prerelease
+        run: echo "::set-output name=prerelease::$(if [ '${{ github.ref }}' == 'refs/heads/dev' ]; then echo true; else echo false; fi)"
 
       - name: Create Release
         id: create_release
@@ -64,7 +68,7 @@ jobs:
           tag_name: ${{ github.sha }}
           release_name: Release ${{ github.sha }}
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.prerelease.outputs.prerelease }}
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
