@@ -15,7 +15,7 @@ jobs:
         os: [ macos-latest, windows-latest, ubuntu-latest ]
         include:
           - os: macos-latest
-            binary: build/ui/RISCV-Simulator.app
+            binary: build/ui/RISCV-Simulator
           - os: windows-latest
             binary: build/ui/RISCV-Simulator.exe
           - os: ubuntu-latest
@@ -40,13 +40,13 @@ jobs:
           version: '6.6.*'
 
       - name: Configure CMake
-        run: cmake -S . -B build
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
       - name: Build
         run: cmake --build build
 
       - name: Run tests
-        run: ctest --test-dir build/tests --output-on-failure -C Debug -V
+        run: ctest --test-dir build/tests --output-on-failure -C Release -V
 
       - name: list files
         run: ls -R build
