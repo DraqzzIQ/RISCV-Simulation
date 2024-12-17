@@ -40,7 +40,7 @@ TEST(CPUTestSuite, GetRS2)
 TEST(CPUTestSuite, GetImm12)
 {
     uint32_t instruction = 0b11111111100010000000000000000000;
-    EXPECT_EQ(0b111111111000, CPUUtil::GetImm12(instruction));
+    EXPECT_EQ(static_cast<int16_t>(0b1111111111111000), CPUUtil::GetImm12(instruction));
 }
 
 TEST(CPUTestSuite, GetImm5)
