@@ -18,7 +18,7 @@ jobs:
           - os: macos-latest
             binary: build/ui/RISCV-Simulator
           - os: windows-latest
-            binary: build/ui/RISCV-Simulator.exe
+            binary: RISCV-Simulation\build\ui\Release\RISCV-Simulator.exe
           - os: ubuntu-latest
             binary: build/ui/RISCV-Simulator
 
@@ -91,6 +91,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.release_tag.outputs.new_tag }}
-          artifacts: macos-latest, windows-latest, ubuntu-latest
+          artifacts: macos-latest/macos-latest, windows-latest/windows-latest, ubuntu-latest/ubuntu-latest
           draft: false
           prerelease: ${{ steps.prerelease.outputs.prerelease }}
