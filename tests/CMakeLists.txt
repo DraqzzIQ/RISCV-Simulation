@@ -13,3 +13,6 @@ add_executable(Google_Tests_run
 target_link_libraries(Google_Tests_run parser simulator)
 
 target_link_libraries(Google_Tests_run gtest gtest_main)
+
+enable_testing()
+add_test(NAME Google_Tests COMMAND Google_Tests_run)
