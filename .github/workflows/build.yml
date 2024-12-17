@@ -23,10 +23,9 @@ jobs:
         uses: lukka/get-cmake@latest
 
       - name: Install dependencies
-        run: |
-          if [ ${{ matrix.os }} == 'ubuntu-latest' ]; then sudo apt-get update && sudo apt-get install -y qt6-base-dev; fi
-          if [ ${{ matrix.os }} == 'macos-latest' ]; then brew install qt6; fi
-          if [ ${{ matrix.os }} == 'windows-latest' ]; then choco install qt6; fi
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.2.*'
 
       - name: Configure CMake
         run: cmake -S . -B build
