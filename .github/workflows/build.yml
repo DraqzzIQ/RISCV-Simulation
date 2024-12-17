@@ -41,7 +41,7 @@ jobs:
           version: '6.6.*'
 
       - name: list qt files
-        run: ls -R Qt
+        run: ls -R
 
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
