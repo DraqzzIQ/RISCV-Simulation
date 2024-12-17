@@ -25,7 +25,7 @@ jobs:
               build\ui\Release\Qt6Widgets.dll
               D:\a\RISCV-Simulation\Qt\6.6.3\msvc2019_64\plugins\platforms\qwindows.dll
           - os: ubuntu-latest
-            binary: build/ui/RISCV-Simulator
+            binary: build/ui/RISCV-Simulator.AppImage
 
     steps:
       - name: Checkout code
@@ -45,9 +45,6 @@ jobs:
         with:
           version: '6.6.3'
 
-      - name: list qt files
-        run: ls -R ../
-
       - name: Configure CMake
         run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
@@ -57,8 +54,18 @@ jobs:
       - name: Run tests
         run: ctest --test-dir build/tests --output-on-failure -C Release -V
 
-      - name: list build files
-        run: ls -R build
+      - name: Linux AppImage
+        if: matrix.os == 'ubuntu-latest'
+        working-directory: ${{ env.SOURCE_DIR }}/build/ui
+        run: |
+          wget -O deploy.AppImage https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
+          chmod +x deploy.AppImage
+          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${{ github.workspace }}/Qt/6.6.3/gcc_64/lib/
+          cp ${{ env.SOURCE_DIR }}/linux/* .
+          ./deploy.AppImage RISCV-Simulator -appimage -no-translations
+
+      - name: List files
+        run: ls -R
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
