@@ -108,6 +108,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.release_tag.outputs.new_tag }}
-          artifacts: macos-latest.zip, windows-latest.zip, ubuntu-latest.zip
+          artifacts: windows-latest.zip #, ubuntu-latest.zip, macos-latest.zip
           draft: false
           prerelease: ${{ steps.prerelease.outputs.prerelease }}
