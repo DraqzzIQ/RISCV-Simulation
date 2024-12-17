@@ -1,0 +1,113 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - master
+      - dev
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ macos-latest, windows-latest, ubuntu-latest ]
+        build_type: [ Release ]
+        include:
+          - os: macos-latest
+            binary: build/ui/RISCV-Simulator
+          - os: windows-latest
+            binary: |
+              build\ui\Release\RISCV-Simulator.exe
+              build\ui\Release\Qt6Core.dll
+              build\ui\Release\Qt6Gui.dll
+              build\ui\Release\Qt6Widgets.dll
+              D:\a\RISCV-Simulation\Qt\6.6.3\msvc2019_64\plugins\platforms\qwindows.dll
+          - os: ubuntu-latest
+            binary: build/ui/RISCV-Simulator
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Update submodules
+        run: git submodule update --init --recursive
+
+      - name: Set up CMake
+        uses: lukka/get-cmake@latest
+
+      - name: Install dependencies
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.6.3'
+
+      - name: Configure CMake
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+
+      - name: Build
+        run: cmake --build build --config ${{ matrix.build_type }}
+
+      - name: Run tests
+        run: ctest --test-dir build/tests --output-on-failure -C Release -V
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          compression-level: 3
+          name: ${{ matrix.os }}
+          path: ${{ matrix.binary }}
+          overwrite: true
+
+  release:
+    permissions:
+      contents: write
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Determine if prerelease
+        id: prerelease
+        run: echo "::set-output name=prerelease::$(if [ '${{ github.ref }}' == 'refs/heads/dev' ]; then echo true; else echo false; fi)"
+
+      - name: Bump version and push tag
+        id: release_tag
+        uses: anothrNick/github-tag-action@1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRERELEASE_SUFFIX: alpha
+          DEFAULT_BUMP: minor
+          VERBOSE: true
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+
+      - name: List files
+        run: ls -R
+
+      - name: Windows qwindows.dll
+        run: mkdir -p windows/plugins/platforms && mv windows-latest/Qt/6.6.3/msvc2019_64/plugins/platforms/qwindows.dll windows/plugins/platforms
+
+      - name: Windows Qt6 dlls
+        run: mv windows-latest/RISCV-Simulation/build/ui/Release/Qt6*.dll windows
+
+      - name: Windows exe
+        run: mv windows-latest/RISCV-Simulation/build/ui/Release/RISCV-Simulator.exe windows
+
+      - name: zip files
+        run: zip -r macos-latest.zip macos-latest && zip -r windows-latest.zip windows && zip -r ubuntu-latest.zip ubuntu-latest
+
+      - name: Create Release
+        id: create_release
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.release_tag.outputs.new_tag }}
+          artifacts: windows-latest.zip #, ubuntu-latest.zip, macos-latest.zip
+          draft: false
+          prerelease: ${{ steps.prerelease.outputs.prerelease }}
