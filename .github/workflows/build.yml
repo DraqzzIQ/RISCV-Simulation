@@ -60,6 +60,7 @@ jobs:
       - name: Linux AppImage
         if: matrix.os == 'ubuntu-latest'
         run: |
+          sudo apt update && sudo apt install -y libfuse2
           cd build/ui
           wget -O deploy.AppImage https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
           chmod +x deploy.AppImage
