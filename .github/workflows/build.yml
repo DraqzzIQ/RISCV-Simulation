@@ -61,13 +61,12 @@ jobs:
         run: ls -R build
 
       - name: Upload build artifacts
-        overwrite: true
         uses: actions/upload-artifact@v4
         with:
           compression-level: 3
           name: ${{ matrix.os }}
           path: ${{ matrix.binary }}
-
+          overwrite: true
 
   release:
     permissions:
