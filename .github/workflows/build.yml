@@ -18,6 +18,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Update submodules
+        run: git submodule update --init --recursive
 
       - name: Set up CMake
         uses: lukka/get-cmake@latest
