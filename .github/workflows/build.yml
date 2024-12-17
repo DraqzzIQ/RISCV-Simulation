@@ -25,7 +25,7 @@ jobs:
               build\ui\Release\Qt6Widgets.dll
               D:\a\RISCV-Simulation\Qt\6.6.3\msvc2019_64\plugins\platforms\qwindows.dll
           - os: ubuntu-latest
-            binary: build/ui/RISCV-Simulator.AppImage
+            binary: build/ui/RISCV-Simulator
 
     steps:
       - name: Checkout code
@@ -53,22 +53,6 @@ jobs:
 
       - name: Run tests
         run: ctest --test-dir build/tests --output-on-failure -C Release -V
-
-      - name: List files
-        run: ls -R
-
-      - name: Linux AppImage
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt update && sudo apt install -y libfuse2
-          cd build/ui
-          wget -O deploy.AppImage https://github.com/probonopd/go-appimage/releases/download/continuous/appimagetool-860-x86_64.AppImage
-          chmod +x deploy.AppImage
-          export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${{ github.workspace }}/Qt/6.6.3/gcc_64/lib/
-          ./deploy.AppImage -s deploy RISCV-Simulator
-
-      - name: List files
-        run: ls -R
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -118,9 +102,6 @@ jobs:
 
       - name: zip files
         run: zip -r macos-latest.zip macos-latest && zip -r windows-latest.zip windows && zip -r ubuntu-latest.zip ubuntu-latest
-
-      - name: List files
-        run: ls -R
 
       - name: Create Release
         id: create_release
