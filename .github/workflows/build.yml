@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         os: [ macos-latest, windows-latest, ubuntu-latest ]
+        build_type: [ Release ]
         include:
           - os: macos-latest
             binary: build/ui/RISCV-Simulator
@@ -40,10 +41,10 @@ jobs:
           version: '6.6.*'
 
       - name: Configure CMake
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
 
       - name: Build
-        run: cmake --build build
+        run: cmake --build build --config ${{ matrix.build_type }}
 
       - name: Run tests
         run: ctest --test-dir build/tests --output-on-failure -C Release -V
