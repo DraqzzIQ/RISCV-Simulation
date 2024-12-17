@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ macos-latest, windows-latest, ubuntu-20.04 ]
+        os: [ macos-latest, windows-latest, ubuntu-latest ]
         build_type: [ Release ]
         include:
           - os: macos-latest
@@ -24,7 +24,7 @@ jobs:
               build\ui\Release\Qt6Gui.dll
               build\ui\Release\Qt6Widgets.dll
               D:\a\RISCV-Simulation\Qt\6.6.3\msvc2019_64\plugins\platforms\qwindows.dll
-          - os: ubuntu-20.04
+          - os: ubuntu-latest
             binary: build/ui/RISCV-Simulator.AppImage
 
     steps:
@@ -62,7 +62,7 @@ jobs:
         run: |
           sudo apt update && sudo apt install -y libfuse2
           cd build/ui
-          wget -O deploy.AppImage https://github.com/probonopd/linuxdeployqt/releases/download/continuous/linuxdeployqt-continuous-x86_64.AppImage
+          wget -O deploy.AppImage https://github.com/probonopd/go-appimage/releases/download/continuous/appimagetool-860-x86_64.AppImage
           chmod +x deploy.AppImage
           export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:${{ github.workspace }}/Qt/6.6.3/gcc_64/lib/
           ./deploy.AppImage RISCV-Simulator -appimage -no-translations
