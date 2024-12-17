@@ -13,7 +13,13 @@ jobs:
     strategy:
       matrix:
         os: [ macos-latest, windows-latest, ubuntu-latest ]
-        compiler: [ gcc ] # Specify your desired compiler here
+        include:
+          - os: macos-latest
+            binary: build/ui/RISCV-Simulator.app
+          - os: windows-latest
+            binary: build/ui/RISCV-Simulator.exe
+          - os: ubuntu-latest
+            binary: build/ui/RISCV-Simulator
 
     steps:
       - name: Checkout code
@@ -42,10 +48,13 @@ jobs:
       - name: Run tests
         run: ctest --test-dir build/tests --output-on-failure -C Debug -V
 
-      - name: Package build
-        run: |
-          mkdir -p release
-          cp -r build/* release/
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          compression-level: 3
+          name: ${{ matrix.os }}
+          path: ${{ matrix.binary }}
+
 
   release:
     permissions:
@@ -61,10 +70,13 @@ jobs:
         id: prerelease
         run: echo "::set-output name=prerelease::$(if [ '${{ github.ref }}' == 'refs/heads/dev' ]; then echo true; else echo false; fi)"
 
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+
       - name: Create Release
         id: create_release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: release/
+          artifacts: ./
           draft: false
           prerelease: ${{ steps.prerelease.outputs.prerelease }}
