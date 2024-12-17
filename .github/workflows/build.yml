@@ -23,7 +23,7 @@ jobs:
               build\ui\Release\Qt6Core.dll
               build\ui\Release\Qt6Gui.dll
               build\ui\Release\Qt6Widgets.dll
-              plugins\platforms\qwindows.dll
+              ..\Qt\6.6.3\msvc2019_64\plugins\platforms\qwindows.dll
           - os: ubuntu-latest
             binary: build/ui/RISCV-Simulator
 
@@ -61,6 +61,7 @@ jobs:
         run: ls -R build
 
       - name: Upload build artifacts
+        overwrite: true
         uses: actions/upload-artifact@v4
         with:
           compression-level: 3
@@ -82,8 +83,6 @@ jobs:
         id: prerelease
         run: echo "::set-output name=prerelease::$(if [ '${{ github.ref }}' == 'refs/heads/dev' ]; then echo true; else echo false; fi)"
 
-
-
       - name: Bump version and push tag
         id: release_tag
         uses: anothrNick/github-tag-action@1
@@ -97,11 +96,13 @@ jobs:
         uses: actions/download-artifact@v4
 
       - name: Windows qwindows.dll
-        if: runner.os == 'Windows'
-        run: mkdir -p windows-latest/plugins/platforms && mv windows-latest/qwindows.dll windows-latest/plugins/platforms
+        run: mkdir -p windows/plugins/platforms && mv windows-latest/qwindows.dll windows/plugins/platforms
+
+      - name: Windows Qt6 dlls
+        run: mv windows-latest/build/ui/Release/Qt6*.dll windows
 
       - name: zip files
-        run: zip -r macos-latest.zip macos-latest && zip -r windows-latest.zip windows-latest && zip -r ubuntu-latest.zip ubuntu-latest
+        run: zip -r macos-latest.zip macos-latest && zip -r windows-latest.zip windows && zip -r ubuntu-latest.zip ubuntu-latest
 
       - name: List files
         run: ls -R
