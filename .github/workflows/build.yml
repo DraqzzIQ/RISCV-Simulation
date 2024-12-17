@@ -18,7 +18,12 @@ jobs:
           - os: macos-latest
             binary: build/ui/RISCV-Simulator
           - os: windows-latest
-            binary: build\ui\Release\RISCV-Simulator.exe, build\ui\Release\Qt6Core.dll, build\ui\Release\Qt6Gui.dll, build\ui\Release\Qt6Widgets.dll, plugins\platforms\qwindows.dll
+            binary: |
+              build\ui\Release\RISCV-Simulator.exe
+              build\ui\Release\Qt6Core.dll
+              build\ui\Release\Qt6Gui.dll
+              build\ui\Release\Qt6Widgets.dll
+              plugins\platforms\qwindows.dll
           - os: ubuntu-latest
             binary: build/ui/RISCV-Simulator
 
