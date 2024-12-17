@@ -101,7 +101,7 @@ jobs:
         run: mkdir -p windows/plugins/platforms && mv windows-latest/Qt/6.6.3/msvc2019_64/plugins/platforms/qwindows.dll windows/plugins/platforms
 
       - name: Windows Qt6 dlls
-        run: mv windows-latest/build/ui/Release/Qt6*.dll windows
+        run: mv windows-latest/RISCV-Simulation/build/ui/Release/Qt6*.dll windows
 
       - name: zip files
         run: zip -r macos-latest.zip macos-latest && zip -r windows-latest.zip windows && zip -r ubuntu-latest.zip ubuntu-latest
