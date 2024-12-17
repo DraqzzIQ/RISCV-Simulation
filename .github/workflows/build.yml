@@ -40,7 +40,7 @@ jobs:
         run: cmake --build build
 
       - name: Run tests
-        run: ctest --test-dir build/tests --output-on-failure -C Debug
+        run: ctest --test-dir build/tests --output-on-failure -C Debug -V
 
       - name: Package build
         run: |
@@ -48,7 +48,8 @@ jobs:
           cp -r build/* release/
 
   release:
-    permissions: write-all
+    permissions:
+      contents: write
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
     needs: build
     runs-on: ubuntu-latest
@@ -62,21 +63,8 @@ jobs:
 
       - name: Create Release
         id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ github.sha }}
-          release_name: Release ${{ github.sha }}
+          artifacts: release/
           draft: false
           prerelease: ${{ steps.prerelease.outputs.prerelease }}
-
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: release/
-          asset_name: build_output
-          asset_content_type: application/zip
