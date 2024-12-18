@@ -35,6 +35,7 @@ private slots:
     void step();
     void stop();
     void setSpeed(int speed);
+    void setTheme(int index);
 
 private:
     void loadStyle(const QString& path);

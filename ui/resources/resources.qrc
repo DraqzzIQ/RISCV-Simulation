@@ -5,5 +5,7 @@
         <file>images/stop.png</file>
         <file>images/forward.png</file>
         <file>images/fast_forward.png</file>
+        <file>themes/dark.qss</file>
+        <file>themes/light.qss</file>
     </qresource>
 </RCC>

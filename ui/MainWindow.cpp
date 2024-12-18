@@ -328,8 +328,7 @@ void MainWindow::performConnections()
     connect(m_saveAsAction, &QAction::triggered, this, &MainWindow::saveAsFile);
     connect(m_saveAction, &QAction::triggered, this, &MainWindow::saveFile);
     connect(m_openAction, &QAction::triggered, this, &MainWindow::openFile);
-    connect(m_themeCombobox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            [this](const int index) { m_codeEditor->setSyntaxStyle(m_themes[index].second); });
+    connect(m_themeCombobox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::setTheme);
 }
 
 void MainWindow::saveAsFile()
@@ -405,6 +404,15 @@ void MainWindow::setSpeed(const int speed)
     if (m_simulationThread) {
         m_simulationThread->setSpeed(m_speed);
     }
+}
+void MainWindow::setTheme(const int index)
+{
+    m_codeEditor->setSyntaxStyle(m_themes[index].second);
+
+    QFile styleSheet(index == 1 ? ":/styles/dark.qss" : ":/styles/light.qss");
+    styleSheet.open(QFile::ReadOnly);
+    const QString style(styleSheet.readAll());
+    qApp->setStyleSheet(style);
 }
 
 void MainWindow::run()
