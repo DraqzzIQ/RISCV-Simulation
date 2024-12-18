@@ -53,11 +53,12 @@ private:
     void decreaseFontSize() const;
     void wheelEvent(QWheelEvent* event) override;
     void ensureMemoryMapCapacity();
-    void errorPopup(const string& message) const;
-    void setResult(const ExecutionResult& result);
+    bool errorPopup(const string& message, bool yesNoButtons = false) const;
     bool parseAndSetInstructions() const;
     void reset();
+    void setResult(const ExecutionResult& result);
     void executionError(const ExecutionResult& result);
+    void executionFinished();
     void highlightMemoryLabel(QLabel* label) const;
     void highlightRegisterLineEdit(QLineEdit* lineEdit) const;
     int calculateErrorLine(int instruction) const;
@@ -89,7 +90,6 @@ private:
     QFont* m_monoFont; // Monospace font for memory and register values
 
     Simulator* m_simulator;
-    bool m_running;
     int m_speed;
     SimulationThread* m_simulationThread;
 };
