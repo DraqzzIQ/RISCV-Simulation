@@ -101,13 +101,13 @@ jobs:
         run: mv windows-latest/RISCV-Simulation/build/ui/Release/RISCV-Simulator.exe windows
 
       - name: zip files
-        run: zip -r macos-latest.zip macos-latest && zip -r windows-latest.zip windows && zip -r ubuntu-latest.zip ubuntu-latest
-
+        run: zip -r macos-latest.zip macos-latest && zip -r windows-x64.zip windows && zip -r ubuntu-latest.zip ubuntu-latest
+    
       - name: Create Release
         id: create_release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.release_tag.outputs.new_tag }}
-          artifacts: windows-latest.zip #, ubuntu-latest.zip, macos-latest.zip
+          artifacts: windows-x64.zip #, ubuntu-latest.zip, macos-latest.zip
           draft: false
           prerelease: ${{ steps.prerelease.outputs.prerelease }}
