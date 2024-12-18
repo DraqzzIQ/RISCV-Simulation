@@ -221,6 +221,12 @@ QWidget* MainWindow::createRegisterPane()
         auto regName = QString("x%1:").arg(i);
         const auto regLabel = new QLabel(regName);
         const auto regValue = new QLineEdit("00000000");
+
+        if (i == 0) {
+            regValue->setText("0 (read-only)");
+            regValue->setStyleSheet("font-weight: bold;");
+        }
+        
         regValue->setFont(*m_monoFont);
         regValue->setReadOnly(true); // Registers are non-editable
 
@@ -493,8 +499,12 @@ void MainWindow::updateRegisterWithFormat(const QString& format) const
     const uint32_t pcValueInt = m_pcData;
     m_pcValue->setText(toHex ? QString("%1").arg(pcValueInt, 8, 16, QChar('0')) : QString::number(pcValueInt));
 
-    // registers
-    for (int i = 0; i < 32; i++) {
+    // x0
+    m_registerMap[0]->setText("0 (read-only)");
+    m_registerMap[0]->setStyleSheet("font-weight: bold;");
+    
+    // remaining registers
+    for (int i = 1; i < 32; i++) {
         const int32_t regValueInt = m_registerData[i];
         m_registerMap[i]->setText(toHex ? QString("%1").arg(static_cast<uint32_t>(regValueInt), 8, 16, QChar('0'))
                                         : QString::number(regValueInt));
