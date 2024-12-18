@@ -23,7 +23,12 @@ void SimulationThread::run() {
         }
         emit resultReady(result);
 
-        QThread::msleep(m_speed);
+        int elapsed = 0;
+        while (m_running && elapsed < m_speed) {
+            constexpr int sleepInterval = 50;
+            msleep(sleepInterval);
+            elapsed += sleepInterval;
+        }
     }
 }
 

@@ -447,7 +447,6 @@ void MainWindow::stop()
 {
     if (m_simulationThread) {
         m_simulationThread->stop();
-        m_simulationThread->wait();
         m_simulationThread = nullptr;
     }
     m_running = false;
