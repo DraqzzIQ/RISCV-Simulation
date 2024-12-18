@@ -95,12 +95,17 @@ void MainWindow::createWidgets()
 
     QMenu* fileMenu = menuBar->addMenu("File");
     m_saveAsAction = fileMenu->addAction("Save As");
+    m_saveAsAction->setShortcut(QKeySequence("Ctrl+Shift+S"));
     m_saveAction = fileMenu->addAction("Save");
+    m_saveAction->setShortcut(QKeySequence("Ctrl+S"));
     m_openAction = fileMenu->addAction("Open");
+    m_openAction->setShortcut(QKeySequence("Ctrl+O"));
 
     QMenu* viewMenu = menuBar->addMenu("View");
-    viewMenu->addAction("Increase Font Size", this, &MainWindow::increaseFontSize);
-    viewMenu->addAction("Decrease Font Size", this, &MainWindow::decreaseFontSize);
+    QAction* action = viewMenu->addAction("Increase Font Size", this, &MainWindow::increaseFontSize);
+    action->setShortcut(QKeySequence("Ctrl++"));
+    action = viewMenu->addAction("Decrease Font Size", this, &MainWindow::decreaseFontSize);
+    action->setShortcut(QKeySequence("Ctrl+-"));
 
     createToolbar();
 
@@ -332,7 +337,6 @@ void MainWindow::performConnections()
     connect(m_stepButton, &QPushButton::clicked, this, &MainWindow::step);
     connect(m_stopButton, &QPushButton::clicked, this, &MainWindow::stop);
     connect(m_speedSlider, &QSlider::valueChanged, this, &MainWindow::setSpeed);
-    connect(new QShortcut(QKeySequence("Ctrl+S"), this), &QShortcut::activated, this, &MainWindow::saveFile);
     connect(m_memoryFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateMemoryWithFormat);
     connect(m_registerFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateRegisterWithFormat);
     connect(m_saveAsAction, &QAction::triggered, this, &MainWindow::saveAsFile);
@@ -343,12 +347,16 @@ void MainWindow::performConnections()
 
 void MainWindow::saveAsFile()
 {
-    const QString fileName = QFileDialog::getOpenFileName(this, "Save File", "", "Text Files (*.txt);;All Files (*)");
+    const QString fileName = QFileDialog::getSaveFileName(this, "Save File", "", "Text Files (*.txt);;All Files (*)");
     if (fileName.isEmpty()) {
         return;
     }
     if (m_file == nullptr) {
         m_file = new QFile(fileName);
+        if (!m_file->open(QIODevice::ReadWrite)) {
+            QMessageBox::information(this, tr("Unable to open file"), m_file->errorString());
+            return;
+        }
     }
     else {
         m_file->close();
@@ -440,6 +448,8 @@ void MainWindow::run()
     connect(m_simulationThread, &SimulationThread::errorOccurred, this, &MainWindow::executionError);
     connect(m_simulationThread, &SimulationThread::finished, this, &MainWindow::executionFinished);
 
+    m_stepButton->setEnabled(false);
+
     m_simulationThread->start();
 }
 
@@ -472,6 +482,7 @@ void MainWindow::stop()
         m_simulationThread->stop();
         m_simulationThread = nullptr;
     }
+    m_stepButton->setEnabled(true);
     reset();
 }
 
@@ -490,6 +501,7 @@ void MainWindow::executionError(const ExecutionResult& error)
 {
     errorPopup(ErrorParser::ParseError(error.error, calculateErrorLine(error.errorInstruction)));
     m_simulationThread = nullptr;
+    m_stepButton->setEnabled(true);
 }
 
 void MainWindow::setResult(const ExecutionResult& result)
@@ -512,7 +524,11 @@ void MainWindow::setResult(const ExecutionResult& result)
     }
 }
 
-void MainWindow::executionFinished() { m_simulationThread = nullptr; }
+void MainWindow::executionFinished()
+{
+    m_simulationThread = nullptr;
+    m_stepButton->setEnabled(true);
+}
 
 void MainWindow::updateRegisterWithFormat(const QString& format) const
 {
