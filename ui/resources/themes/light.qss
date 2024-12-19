@@ -1,6 +1,24 @@
 QMainWindow {
 	background-color:#ECECEC;
 }
+QMenuBar {
+    background-color: #ECECEC;
+    spacing: 3px;
+}
+
+QMenuBar::item {
+    padding: 1px 4px;
+    background: transparent;
+    border-radius: 4px;
+}
+
+QMenuBar::item:selected {
+    background: #a8a8a8;
+}
+
+QMenuBar::item:pressed {
+    background: #888888;
+}
 QLineEdit {
 	border-width: 1px; border-radius: 4px;
 	border-color: rgb(58, 58, 58);
@@ -36,6 +54,8 @@ QSlider::sub-page {
 }
 QComboBox{
     color: #000000;
+    background-color: #ECECEC;
+    width: 25px;
 }
 QComboBox QAbstractItemView {
     color: #000000;
@@ -82,9 +102,9 @@ QPushButton:disabled{
 QMessageBox {
     background-color: #ECECEC;
 }
+QCodeEditor {
+    background-color: #FFFFFF;
+}
 *[cssClass="themedBackground"] {
     background-color: #ECECEC;
-}
-QCodeEditor {
-background-color: #FFFFFF;
 }
