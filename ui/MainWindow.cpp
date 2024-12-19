@@ -449,6 +449,7 @@ void MainWindow::run()
     connect(m_simulationThread, &SimulationThread::finished, this, &MainWindow::executionFinished);
 
     m_stepButton->setEnabled(false);
+    m_runButton->setEnabled(false);
 
     m_simulationThread->start();
 }
@@ -483,6 +484,8 @@ void MainWindow::stop()
         m_simulationThread = nullptr;
     }
     m_stepButton->setEnabled(true);
+    m_runButton->setEnabled(true);
+
     reset();
 }
 
@@ -502,6 +505,7 @@ void MainWindow::executionError(const ExecutionResult& error)
     errorPopup(ErrorParser::ParseError(error.error, calculateErrorLine(error.errorInstruction)));
     m_simulationThread = nullptr;
     m_stepButton->setEnabled(true);
+    m_runButton->setEnabled(true);
 }
 
 void MainWindow::setResult(const ExecutionResult& result)
@@ -528,6 +532,7 @@ void MainWindow::executionFinished()
 {
     m_simulationThread = nullptr;
     m_stepButton->setEnabled(true);
+    m_runButton->setEnabled(true);
 }
 
 void MainWindow::updateRegisterWithFormat(const QString& format) const
