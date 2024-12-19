@@ -3,15 +3,15 @@ QMainWindow {
 }
 QMenuBar {
     background-color: #282A36;
+    color: #ffffff;
     spacing: 3px;
 }
-
 QMenuBar::item {
     padding: 1px 4px;
-    background: transparent;
+    background-color: #282A36;
+    color: #ffffff;
     border-radius: 4px;
 }
-
 QMenuBar::item:selected {
     background: #a8a8a8;
 }
@@ -26,15 +26,15 @@ QLineEdit {
 	color: #FFFFFF;
 	background-color: #282A36;
 }
+QTextEdit {
+    color: #FFFFFF;
+}
 QLabel {
 	color: #FFFFFF;
 	background-color: #282A36;
 }
 QToolBar {
     border-color: #282A36;
-}
-QToolBar {
-    border-color: #ECECEC;
 }
 QSlider::groove {
 	height: 5px;

@@ -117,7 +117,7 @@ void MainWindow::createWidgets()
 
     // Registers
     QWidget* memoryPane = createRegisterPane();
-    memoryPane->setFixedWidth(330);
+    memoryPane->setFixedWidth(360);
     mainLayout->addWidget(memoryPane);
 
     // CodeEditor
@@ -423,6 +423,7 @@ void MainWindow::setSpeed(const int speed)
         m_simulationThread->setSpeed(m_speed);
     }
 }
+
 void MainWindow::setTheme(const int index)
 {
     m_codeEditor->setSyntaxStyle(m_themes[index].second);
@@ -544,8 +545,9 @@ void MainWindow::updateRegisterWithFormat(const QString& format) const
     // remaining registers
     for (int i = 1; i < 32; i++) {
         const int32_t regValueInt = m_registerData[i];
-        m_registerMap[i]->setText(toHex ? QString("%1").arg(static_cast<uint32_t>(regValueInt), 8, 16, QChar('0'))
-                                        : QString::number(regValueInt));
+        m_registerMap[i]->setText(toHex
+            ? QString("%1").arg(static_cast<uint32_t>(regValueInt), 8, 16, QChar('0'))
+            : QString::number(regValueInt));
     }
 }
 
@@ -565,8 +567,9 @@ void MainWindow::updateMemoryWithFormat(const QString& format)
         // Group the bytes (4 bytes = 32 bits)
         for (int j = 0; j < 4; j++) {
             const uint8_t byteValue = (value >> (8 * j)) & 0xFF;
-            memoryRowText += (toHex ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
-                                    : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
+            memoryRowText += (toHex
+                ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
+                : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
         }
         m_memoryMap[i]->setText(memoryRowText);
     }

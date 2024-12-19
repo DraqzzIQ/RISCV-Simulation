@@ -63,4 +63,6 @@
     <style name="Declaration" bold="true"/>
     <style name="FunctionDefinition"/>
     <style name="OutputArgument" italic="true"/>
+    <style name="Highlight" background="#8be9fd" italic="true" bold="true"/>
+    <style name="Register" foreground="#ff5555"/>
 </style-scheme>
