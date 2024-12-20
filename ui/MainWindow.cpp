@@ -32,7 +32,7 @@ MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent), m_setupLayout(nullptr), m_themeCombobox(nullptr), m_codeEditor(nullptr), m_completer(nullptr),
     m_highlighter(nullptr), m_file(nullptr), m_saveAction(nullptr), m_openAction(nullptr), m_spacer(nullptr),
     m_pcValue(nullptr), m_registerFormatComboBox(nullptr), m_memoryLayout(nullptr), m_memoryFormatComboBox(nullptr),
-    m_monoFont(new QFont("Courier", 11)), m_simulator(nullptr), m_running(false), m_speed(1000), m_simulationThread(nullptr)
+    m_monoFont(new QFont("Courier", 11)), m_simulator(nullptr), m_speed(1000), m_simulationThread(nullptr)
 {
     initData();
     createWidgets();
@@ -47,7 +47,7 @@ MainWindow::MainWindow(QWidget* parent) :
 void MainWindow::initData()
 {
     m_highlighter = new QRiscvAsmHighlighter;
-    m_themes = {{"light", QSyntaxStyle::defaultStyle()}};
+    m_themes = {};
     m_completer = new QRiscvAsmCompleter(this);
     m_registerMap = vector<QLineEdit*>(32);
     m_memoryLayout = new QVBoxLayout;
@@ -55,6 +55,7 @@ void MainWindow::initData()
     m_simulator = new Simulator;
     m_registerData = vector<int32_t>(32);
 
+    loadStyle(":/styles/light.xml");
     loadStyle(":/styles/drakula.xml");
 }
 
@@ -94,23 +95,19 @@ void MainWindow::createWidgets()
 
     QMenu* fileMenu = menuBar->addMenu("File");
     m_saveAsAction = fileMenu->addAction("Save As");
+    m_saveAsAction->setShortcut(QKeySequence("Ctrl+Shift+S"));
     m_saveAction = fileMenu->addAction("Save");
+    m_saveAction->setShortcut(QKeySequence("Ctrl+S"));
     m_openAction = fileMenu->addAction("Open");
+    m_openAction->setShortcut(QKeySequence("Ctrl+O"));
 
     QMenu* viewMenu = menuBar->addMenu("View");
-    viewMenu->addAction("Increase Font Size", this, &MainWindow::increaseFontSize);
-    viewMenu->addAction("Decrease Font Size", this, &MainWindow::decreaseFontSize);
+    QAction* action = viewMenu->addAction("Increase Font Size", this, &MainWindow::increaseFontSize);
+    action->setShortcut(QKeySequence("Ctrl++"));
+    action = viewMenu->addAction("Decrease Font Size", this, &MainWindow::decreaseFontSize);
+    action->setShortcut(QKeySequence("Ctrl+-"));
 
     createToolbar();
-
-    // Theme selection
-    const auto themeWidget = new QWidget(menuBar);
-    const auto themeLayout = new QHBoxLayout(themeWidget);
-    themeLayout->setContentsMargins(0, 0, 0, 0);
-    themeLayout->addWidget(new QLabel("Theme:"));
-    m_themeCombobox = new QComboBox();
-    themeLayout->addWidget(m_themeCombobox);
-    menuBar->setCornerWidget(themeWidget, Qt::TopRightCorner);
 
     // Layout
     const auto container = new QWidget(this);
@@ -120,7 +117,7 @@ void MainWindow::createWidgets()
 
     // Registers
     QWidget* memoryPane = createRegisterPane();
-    memoryPane->setFixedWidth(330);
+    memoryPane->setFixedWidth(360);
     mainLayout->addWidget(memoryPane);
 
     // CodeEditor
@@ -142,7 +139,7 @@ void MainWindow::createToolbar()
 
     const auto centerContainer = new QWidget();
     const auto layout = new QHBoxLayout();
-
+    centerContainer->setProperty("cssClass", "themedBackground");
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(10);
 
@@ -150,16 +147,19 @@ void MainWindow::createToolbar()
     m_stopButton->setIcon(QIcon(":/images/stop.png"));
     m_stopButton->setIconSize(QSize(20, 20));
     m_stopButton->setToolTip("Stop and reset the simulation");
+    m_stopButton->setProperty("cssClass", "themedBackground");
 
     m_stepButton = new QPushButton();
     m_stepButton->setIcon(QIcon(":/images/forward.png"));
     m_stepButton->setIconSize(QSize(20, 20));
     m_stepButton->setToolTip("Step through the simulation");
+    m_stepButton->setProperty("cssClass", "themedBackground");
 
     m_runButton = new QPushButton();
     m_runButton->setIcon(QIcon(":/images/fast_forward.png"));
     m_runButton->setIconSize(QSize(20, 20));
     m_runButton->setToolTip("Run the simulation");
+    m_runButton->setProperty("cssClass", "themedBackground");
 
     m_speedSlider = new QSlider(Qt::Horizontal);
     m_speedSlider->setRange(50, 3000);
@@ -174,15 +174,28 @@ void MainWindow::createToolbar()
 
     centerContainer->setLayout(layout);
 
+    // Theme selection
+    const auto themeWidget = new QWidget(toolbar);
+    const auto themeLayout = new QHBoxLayout(themeWidget);
+    themeWidget->setProperty("cssClass", "themedBackground");
+    themeLayout->setProperty("cssClass", "themedBackground");
+    themeLayout->setContentsMargins(0, 0, 0, 0);
+    themeLayout->addWidget(new QLabel("Theme:"));
+    m_themeCombobox = new QComboBox();
+    themeLayout->addWidget(m_themeCombobox);
+
     // Add spacer widgets to toolbar for centering
     const auto spacerLeft = new QWidget();
+    spacerLeft->setProperty("cssClass", "themedBackground");
     spacerLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     const auto spacerRight = new QWidget();
+    spacerRight->setProperty("cssClass", "themedBackground");
     spacerRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
 
     toolbar->addWidget(spacerLeft);
     toolbar->addWidget(centerContainer);
     toolbar->addWidget(spacerRight);
+    toolbar->addWidget(themeWidget);
 }
 
 QWidget* MainWindow::createRegisterPane()
@@ -202,6 +215,7 @@ QWidget* MainWindow::createRegisterPane()
     // Scrollable Area for PC and Registers
     const auto scrollArea = new QScrollArea;
     const auto scrollContent = new QWidget;
+    scrollContent->setProperty("cssClass", "themedBackground");
     const auto scrollLayout = new QVBoxLayout;
 
     // Program Counter (PC)
@@ -221,6 +235,11 @@ QWidget* MainWindow::createRegisterPane()
         auto regName = QString("x%1:").arg(i);
         const auto regLabel = new QLabel(regName);
         const auto regValue = new QLineEdit("00000000");
+
+        if (i == 0) {
+            regValue->setText("0 (read-only)");
+        }
+
         regValue->setFont(*m_monoFont);
         regValue->setReadOnly(true); // Registers are non-editable
 
@@ -265,6 +284,7 @@ QWidget* MainWindow::createMemoryPane()
     // Create a scrollable area for memory content
     const auto scrollArea = new QScrollArea;
     const auto memContentWidget = new QWidget;
+    memContentWidget->setProperty("cssClass", "themedBackground");
 
     m_memoryData = m_simulator->GetMemory();
 
@@ -287,6 +307,7 @@ void MainWindow::setupWidgets()
 
     const QStyleHints* styleHints = QGuiApplication::styleHints();
     const bool isDark = styleHints->colorScheme() == Qt::ColorScheme::Dark;
+    setTheme(isDark);
 
     // CodeEditor
     m_codeEditor->setSyntaxStyle(isDark ? m_themes[1].second : m_themes[0].second);
@@ -316,24 +337,26 @@ void MainWindow::performConnections()
     connect(m_stepButton, &QPushButton::clicked, this, &MainWindow::step);
     connect(m_stopButton, &QPushButton::clicked, this, &MainWindow::stop);
     connect(m_speedSlider, &QSlider::valueChanged, this, &MainWindow::setSpeed);
-    connect(new QShortcut(QKeySequence("Ctrl+S"), this), &QShortcut::activated, this, &MainWindow::saveFile);
     connect(m_memoryFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateMemoryWithFormat);
     connect(m_registerFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateRegisterWithFormat);
     connect(m_saveAsAction, &QAction::triggered, this, &MainWindow::saveAsFile);
     connect(m_saveAction, &QAction::triggered, this, &MainWindow::saveFile);
     connect(m_openAction, &QAction::triggered, this, &MainWindow::openFile);
-    connect(m_themeCombobox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-            [this](const int index) { m_codeEditor->setSyntaxStyle(m_themes[index].second); });
+    connect(m_themeCombobox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::setTheme);
 }
 
 void MainWindow::saveAsFile()
 {
-    const QString fileName = QFileDialog::getOpenFileName(this, "Save File", "", "Text Files (*.txt);;All Files (*)");
+    const QString fileName = QFileDialog::getSaveFileName(this, "Save File", "", "Text Files (*.txt);;All Files (*)");
     if (fileName.isEmpty()) {
         return;
     }
     if (m_file == nullptr) {
         m_file = new QFile(fileName);
+        if (!m_file->open(QIODevice::ReadWrite)) {
+            QMessageBox::information(this, tr("Unable to open file"), m_file->errorString());
+            return;
+        }
     }
     else {
         m_file->close();
@@ -401,28 +424,40 @@ void MainWindow::setSpeed(const int speed)
     }
 }
 
+void MainWindow::setTheme(const int index)
+{
+    m_codeEditor->setSyntaxStyle(m_themes[index].second);
+
+    QFile styleSheet(index == 1 ? ":/themes/dark.qss" : ":/themes/light.qss");
+    styleSheet.open(QFile::ReadOnly);
+    const QString style(styleSheet.readAll());
+    qApp->setStyleSheet(style);
+}
+
 void MainWindow::run()
 {
     if (!parseAndSetInstructions()) {
         return;
     }
-    
-    if (m_running) {
+
+    if (m_simulationThread != nullptr) {
         return;
     }
 
     m_simulationThread = new SimulationThread(m_simulator, this, m_speed);
     connect(m_simulationThread, &SimulationThread::resultReady, this, &MainWindow::setResult);
     connect(m_simulationThread, &SimulationThread::errorOccurred, this, &MainWindow::executionError);
-    connect(m_simulationThread, &QThread::finished, m_simulationThread, &QObject::deleteLater);
+    connect(m_simulationThread, &SimulationThread::finished, this, &MainWindow::executionFinished);
+
+    m_stepButton->setEnabled(false);
+    m_runButton->setEnabled(false);
 
     m_simulationThread->start();
-    m_running = true;
 }
 
 void MainWindow::step()
 {
-    if (m_running) {
+    if (m_simulationThread != nullptr) {
         return;
     }
     if (!parseAndSetInstructions()) {
@@ -430,21 +465,28 @@ void MainWindow::step()
     }
 
     const ExecutionResult result = m_simulator->Step();
-    if (!result.success) {
-        errorPopup(ErrorParser::ParseError(result.error, calculateErrorLine(result.errorInstruction)));
+    if (result.success) {
+        setResult(result);
         return;
     }
-    setResult(result);
+    if (result.error == ExecutionError::PC_OUT_OF_BOUNDS) {
+        if (errorPopup("Program counter out of bounds. Reset?", true)) {
+            this->reset();
+        }
+        return;
+    }
+    errorPopup(ErrorParser::ParseError(result.error, calculateErrorLine(result.errorInstruction)));
 }
 
 void MainWindow::stop()
 {
-    if (m_simulationThread) {
+    if (m_simulationThread != nullptr) {
         m_simulationThread->stop();
-        m_simulationThread->wait();
         m_simulationThread = nullptr;
     }
-    m_running = false;
+    m_stepButton->setEnabled(true);
+    m_runButton->setEnabled(true);
+
     reset();
 }
 
@@ -462,7 +504,9 @@ void MainWindow::reset()
 void MainWindow::executionError(const ExecutionResult& error)
 {
     errorPopup(ErrorParser::ParseError(error.error, calculateErrorLine(error.errorInstruction)));
-    m_running = false;
+    m_simulationThread = nullptr;
+    m_stepButton->setEnabled(true);
+    m_runButton->setEnabled(true);
 }
 
 void MainWindow::setResult(const ExecutionResult& result)
@@ -485,6 +529,13 @@ void MainWindow::setResult(const ExecutionResult& result)
     }
 }
 
+void MainWindow::executionFinished()
+{
+    m_simulationThread = nullptr;
+    m_stepButton->setEnabled(true);
+    m_runButton->setEnabled(true);
+}
+
 void MainWindow::updateRegisterWithFormat(const QString& format) const
 {
     const bool toHex = (format == "Hexadecimal");
@@ -493,11 +544,15 @@ void MainWindow::updateRegisterWithFormat(const QString& format) const
     const uint32_t pcValueInt = m_pcData;
     m_pcValue->setText(toHex ? QString("%1").arg(pcValueInt, 8, 16, QChar('0')) : QString::number(pcValueInt));
 
-    // registers
-    for (int i = 0; i < 32; i++) {
+    // x0
+    m_registerMap[0]->setText("0 (read-only)");
+
+    // remaining registers
+    for (int i = 1; i < 32; i++) {
         const int32_t regValueInt = m_registerData[i];
-        m_registerMap[i]->setText(toHex ? QString("%1").arg(static_cast<uint32_t>(regValueInt), 8, 16, QChar('0'))
-                                        : QString::number(regValueInt));
+        m_registerMap[i]->setText(toHex
+            ? QString("%1").arg(static_cast<uint32_t>(regValueInt), 8, 16, QChar('0'))
+            : QString::number(regValueInt));
     }
 }
 
@@ -517,8 +572,9 @@ void MainWindow::updateMemoryWithFormat(const QString& format)
         // Group the bytes (4 bytes = 32 bits)
         for (int j = 0; j < 4; j++) {
             const uint8_t byteValue = (value >> (8 * j)) & 0xFF;
-            memoryRowText += (toHex ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
-                                    : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
+            memoryRowText += (toHex
+                ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
+                : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
         }
         m_memoryMap[i]->setText(memoryRowText);
     }
@@ -581,11 +637,16 @@ void MainWindow::wheelEvent(QWheelEvent* event)
     }
 }
 
-void MainWindow::errorPopup(const string& message) const
+bool MainWindow::errorPopup(const string& message, const bool yesNoButtons) const
 {
     QMessageBox msgBox;
     msgBox.setText(QString::fromStdString(message));
-    msgBox.exec();
+    if (!yesNoButtons) {
+        msgBox.exec();
+        return false;
+    }
+    msgBox.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
+    return msgBox.exec() == QMessageBox::Yes;
 }
 
 bool MainWindow::parseAndSetInstructions() const

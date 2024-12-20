@@ -1,0 +1,113 @@
+QMainWindow {
+	background-color:#ECECEC;
+}
+QMenuBar {
+    background-color: #ECECEC;
+    color: #000000;
+    spacing: 3px;
+}
+QMenuBar::item {
+    padding: 1px 4px;
+    background-color: #ECECEC;
+    color: #000000;
+    border-radius: 4px;
+}
+QMenuBar::item:selected {
+    background: #a8a8a8;
+}
+
+QMenuBar::item:pressed {
+    background: #888888;
+}
+QLineEdit {
+	border-width: 1px; border-radius: 4px;
+	border-color: rgb(58, 58, 58);
+	border-style: inset;
+	color: #000000;
+	background-color: #ECECEC;
+}
+QTextEdit {
+    color: #000000;
+}
+QLabel {
+	color: #000000;
+	background-color: #ECECEC;
+}
+QToolBar {
+    border-color: #ECECEC;
+}
+QSlider::groove {
+	height: 5px;
+	background-color: dodgerblue;
+}
+QSlider::handle {
+	background: rgb(253,253,253);
+	border-style: solid;
+	border-width: 1px;
+	border-color: rgb(207,207,207);
+	width: 12px;
+	margin: -5px 0;
+	border-radius: 7px;
+}
+QSlider::add-page {
+    background: rgb(181,181,181);
+}
+QSlider::sub-page {
+    background-color: dodgerblue;
+}
+QComboBox{
+    color: #000000;
+    background-color: #ECECEC;
+    width: 25px;
+}
+QComboBox QAbstractItemView {
+    color: #000000;
+    background-color: #ECECEC;
+}
+QPushButton{
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 5px;
+	border-color: #000000;
+	padding: 10px;
+	background-color: #000000;
+}
+QPushButton::default{
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 5px;
+	border-color: #000000;
+	padding: 10px;
+	background-color: #000000;
+}
+QPushButton:hover{
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 5px;
+	border-color: #000000;
+	padding: 10px;
+	background-color: #8E8E8E;
+}
+QPushButton:pressed{
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 5px;
+	padding: 10px;
+	background-color: #FFFFFF;
+}
+QPushButton:disabled{
+	border-style: solid;
+	border-width: 1px;
+	border-radius: 5px;
+	padding: 10px;
+	background-color: #000000;
+}
+QMessageBox {
+    background-color: #ECECEC;
+}
+QCodeEditor {
+    background-color: #FFFFFF;
+}
+*[cssClass="themedBackground"] {
+    background-color: #ECECEC;
+}

@@ -14,11 +14,12 @@ public:
     explicit SimulationThread(Simulator* simulator, QObject* parent = nullptr, int speed = 1000);
     void run() override;
     void stop();
-    void setSpeed(int speed) { m_speed = speed; }
+    void setSpeed(int speed);
 
 signals:
     void resultReady(const ExecutionResult& result);
     void errorOccurred(const ExecutionResult& error);
+    void finished();
 
 private:
     Simulator* m_simulator;

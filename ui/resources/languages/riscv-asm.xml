@@ -50,6 +50,9 @@
 
         <name>jal</name>
         <name>jalr</name>
+        
+        <name>lui</name>
+        <name>auipc</name>
 
         <name>ADD</name>
         <name>SUB</name>
@@ -99,5 +102,8 @@
 
         <name>JAL</name>
         <name>JALR</name>
+        
+        <name>LUI</name>
+        <name>AUIPC</name>
     </section>
 </root>
