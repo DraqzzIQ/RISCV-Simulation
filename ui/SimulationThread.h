@@ -7,7 +7,8 @@
 #include "ErrorParser.h"
 
 
-class SimulationThread : public QThread {
+class SimulationThread : public QThread
+{
     Q_OBJECT
 
 public:
@@ -15,6 +16,7 @@ public:
     void run() override;
     void stop();
     void setSpeed(int speed);
+    void sleep() const;
 
 signals:
     void resultReady(const ExecutionResult& result);
@@ -25,8 +27,8 @@ private:
     Simulator* m_simulator;
     bool m_running;
     int m_speed;
+    bool m_hasStarted;
 };
 
 
-
-#endif //SIMULATIONTHREAD_H
+#endif // SIMULATIONTHREAD_H

@@ -13,14 +13,13 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
-IF (WIN32)
-    SET(GUI_TYPE WIN32)
-ENDIF (WIN32)
 
 add_executable(RISCV-Simulator ${GUI_TYPE}
         main.cpp
         MainWindow.cpp
         MainWindow.h
+        Config.cpp
+        Config.h
         resources/resources.qrc
         ErrorParser.cpp
         ErrorParser.h
@@ -32,7 +31,8 @@ add_executable(RISCV-Simulator ${GUI_TYPE}
 add_subdirectory(lib/K-Editor)
 
 target_include_directories(RISCV-Simulator PUBLIC
-        lib/K-Editor/lib/public)
+        lib/K-Editor/lib/public
+        lib/json)
 
 target_link_libraries(RISCV-Simulator
         Qt::Core

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <style-scheme version="1.0" name="dark">
-    <style name="Text" foreground="#f8f8f2" background="#282a36"/>
+    <style name="Text" foreground="#f8f8f2" background="#282a36" underlineStyle="SpellCheckUnderline"
+           underlineColor="#ffff00"/>
     <style name="Link" foreground="#8be9fd" underlineStyle="SingleUnderline"/>
     <style name="Selection" background="#44475a"/>
     <style name="LineNumber" foreground="#6272a4"/>
@@ -63,6 +64,6 @@
     <style name="Declaration" bold="true"/>
     <style name="FunctionDefinition"/>
     <style name="OutputArgument" italic="true"/>
-    <style name="Highlight" background="#8be9fd" italic="true" bold="true"/>
+    <style name="Highlight" foreground="#50fa7b" italic="true" bold="true"/>
     <style name="Register" foreground="#ff5555"/>
 </style-scheme>

@@ -52,7 +52,7 @@ TEST(CPUTestSuite, GetImm5)
 TEST(CPUTestSuite, GetImm20)
 {
     uint32_t instruction = 0b11111111100010000000000000000000;
-    EXPECT_EQ(0b11111111100010000000, CPUUtil::GetImm20(instruction));
+    EXPECT_EQ(std::bitset<32>(0b11111111100010000000), std::bitset<32>(CPUUtil::GetImm20(instruction)));
 }
 
 

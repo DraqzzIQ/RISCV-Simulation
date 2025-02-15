@@ -13,7 +13,6 @@
 #include <QPushButton>
 #include <QScrollArea>
 #include <QShortcut>
-#include <QStyleHints>
 #include <QTimer>
 #include <QToolBar>
 #include <QVBoxLayout>
@@ -30,9 +29,11 @@
 
 MainWindow::MainWindow(QWidget* parent) :
     QMainWindow(parent), m_setupLayout(nullptr), m_themeCombobox(nullptr), m_codeEditor(nullptr), m_completer(nullptr),
-    m_highlighter(nullptr), m_file(nullptr), m_saveAction(nullptr), m_openAction(nullptr), m_spacer(nullptr),
-    m_pcValue(nullptr), m_registerFormatComboBox(nullptr), m_memoryLayout(nullptr), m_memoryFormatComboBox(nullptr),
-    m_monoFont(new QFont("Courier", 11)), m_simulator(nullptr), m_speed(1000), m_simulationThread(nullptr)
+    m_highlighter(nullptr), m_file(nullptr), m_saveAction(nullptr), m_openAction(nullptr), m_showMemoryAction(nullptr),
+    m_showRegistersAction(nullptr), m_showAddressAction(nullptr), m_spacer(nullptr), m_pcData(0), m_pcValue(nullptr),
+    m_registerFormatComboBox(nullptr), m_memoryLayout(nullptr), m_memoryFormatComboBox(nullptr),
+    m_monoFont(new QFont("Courier", 11)), m_registerPanel(nullptr), m_memoryPanel(nullptr), m_instructionMap(nullptr),
+    m_hasStarted(false), m_simulator(nullptr), m_speed(1000), m_simulationThread(nullptr), m_configData(nullptr)
 {
     initData();
     createWidgets();
@@ -46,14 +47,15 @@ MainWindow::MainWindow(QWidget* parent) :
 
 void MainWindow::initData()
 {
-    m_highlighter = new QRiscvAsmHighlighter;
-    m_themes = {};
     m_completer = new QRiscvAsmCompleter(this);
+    m_highlighter = new QRiscvAsmHighlighter(m_completer);
+    m_themes = {};
     m_registerMap = vector<QLineEdit*>(32);
     m_memoryLayout = new QVBoxLayout;
     m_spacer = new QSpacerItem(1, 1, QSizePolicy::Minimum, QSizePolicy::Expanding);
     m_simulator = new Simulator;
     m_registerData = vector<int32_t>(32);
+    m_configData = new ConfigData(Config::deserialize());
 
     loadStyle(":/styles/light.xml");
     loadStyle(":/styles/drakula.xml");
@@ -94,6 +96,8 @@ void MainWindow::createWidgets()
     setMenuBar(menuBar);
 
     QMenu* fileMenu = menuBar->addMenu("File");
+    m_newFileAction = fileMenu->addAction("New");
+    m_newFileAction->setShortcut(QKeySequence("Ctrl+N"));
     m_saveAsAction = fileMenu->addAction("Save As");
     m_saveAsAction->setShortcut(QKeySequence("Ctrl+Shift+S"));
     m_saveAction = fileMenu->addAction("Save");
@@ -106,6 +110,21 @@ void MainWindow::createWidgets()
     action->setShortcut(QKeySequence("Ctrl++"));
     action = viewMenu->addAction("Decrease Font Size", this, &MainWindow::decreaseFontSize);
     action->setShortcut(QKeySequence("Ctrl+-"));
+    m_showRegistersAction = new QAction("Show Register Panel", this);
+    m_showRegistersAction->setCheckable(true);
+    m_showRegistersAction->setChecked(m_configData->registersShown);
+    m_showRegistersAction->setShortcut(QKeySequence("Ctrl+R"));
+    viewMenu->addAction(m_showRegistersAction);
+    m_showMemoryAction = new QAction("Show Memory Panel", this);
+    m_showMemoryAction->setCheckable(true);
+    m_showMemoryAction->setChecked(m_configData->memoryShown);
+    m_showMemoryAction->setShortcut(QKeySequence("Ctrl+M"));
+    viewMenu->addAction(m_showMemoryAction);
+    m_showAddressAction = new QAction("Show Instruction Addresses", this);
+    m_showAddressAction->setCheckable(true);
+    m_showAddressAction->setChecked(m_configData->addressesShown);
+    m_showAddressAction->setShortcut(QKeySequence("Ctrl+I"));
+    viewMenu->addAction(m_showAddressAction);
 
     createToolbar();
 
@@ -116,18 +135,18 @@ void MainWindow::createWidgets()
     const auto mainLayout = new QHBoxLayout;
 
     // Registers
-    QWidget* memoryPane = createRegisterPane();
-    memoryPane->setFixedWidth(360);
-    mainLayout->addWidget(memoryPane);
+    m_registerPanel = createRegisterPanel();
+    m_registerPanel->setFixedWidth(m_configData->registersShown ? 360 : 0);
+    mainLayout->addWidget(m_registerPanel);
 
     // CodeEditor
     m_codeEditor = new QCodeEditor(this);
     mainLayout->addWidget(m_codeEditor);
 
     // Memory
-    QWidget* memoryPanel = createMemoryPane();
-    memoryPanel->setFixedWidth(300);
-    mainLayout->addWidget(memoryPanel);
+    m_memoryPanel = createMemoryPanel();
+    m_memoryPanel->setFixedWidth(m_configData->memoryShown ? 300 : 0);
+    mainLayout->addWidget(m_memoryPanel);
 
     container->setLayout(mainLayout);
 }
@@ -166,6 +185,14 @@ void MainWindow::createToolbar()
     m_speedSlider->setValue(m_speed);
     m_speedSlider->setToolTip("Set execution speed (ms)");
 
+    // Add spacer widgets to toolbar for centering
+    const auto spacer = new QWidget();
+    spacer->setProperty("cssClass", "themedBackground");
+    spacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    const auto toolSpacer = new QWidget();
+    toolSpacer->setProperty("cssClass", "themedBackground");
+    toolSpacer->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+
     layout->addWidget(m_stopButton);
     layout->addWidget(m_stepButton);
     layout->addWidget(m_runButton);
@@ -175,30 +202,31 @@ void MainWindow::createToolbar()
     centerContainer->setLayout(layout);
 
     // Theme selection
-    const auto themeWidget = new QWidget(toolbar);
-    const auto themeLayout = new QHBoxLayout(themeWidget);
+    const auto themeWidget = new QWidget();
+    const auto themeLayout = new QHBoxLayout();
     themeWidget->setProperty("cssClass", "themedBackground");
     themeLayout->setProperty("cssClass", "themedBackground");
-    themeLayout->setContentsMargins(0, 0, 0, 0);
-    themeLayout->addWidget(new QLabel("Theme:"));
+
     m_themeCombobox = new QComboBox();
+    themeLayout->addWidget(toolSpacer);
+    themeLayout->addWidget(new QLabel("Theme:"));
     themeLayout->addWidget(m_themeCombobox);
+    themeWidget->setLayout(themeLayout);
 
-    // Add spacer widgets to toolbar for centering
-    const auto spacerLeft = new QWidget();
-    spacerLeft->setProperty("cssClass", "themedBackground");
-    spacerLeft->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    const auto spacerRight = new QWidget();
-    spacerRight->setProperty("cssClass", "themedBackground");
-    spacerRight->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+    const auto toolWidget = new QWidget();
+    const auto toolLayout = new QHBoxLayout();
+    toolWidget->setProperty("cssClass", "themedBackground");
+    toolLayout->setProperty("cssClass", "themedBackground");
 
-    toolbar->addWidget(spacerLeft);
-    toolbar->addWidget(centerContainer);
-    toolbar->addWidget(spacerRight);
-    toolbar->addWidget(themeWidget);
+    toolLayout->addWidget(spacer, 1);
+    toolLayout->addWidget(centerContainer, 1);
+    toolLayout->addWidget(themeWidget, 1);
+
+    toolWidget->setLayout(toolLayout);
+    toolbar->addWidget(toolWidget);
 }
 
-QWidget* MainWindow::createRegisterPane()
+QWidget* MainWindow::createRegisterPanel()
 {
     const auto registerWidget = new QWidget;
     const auto layout = new QVBoxLayout;
@@ -237,7 +265,8 @@ QWidget* MainWindow::createRegisterPane()
         const auto regValue = new QLineEdit("00000000");
 
         if (i == 0) {
-            regValue->setText("0 (read-only)");
+            regLabel->setToolTip("read-only");
+            regValue->setToolTip("read-only");
         }
 
         regValue->setFont(*m_monoFont);
@@ -267,9 +296,9 @@ QWidget* MainWindow::createRegisterPane()
     return registerWidget;
 }
 
-QWidget* MainWindow::createMemoryPane()
+QWidget* MainWindow::createMemoryPanel()
 {
-    const auto rightPane = new QWidget;
+    const auto rightPanel = new QWidget;
     const auto layout = new QVBoxLayout;
 
     // Memory Viewer
@@ -288,25 +317,22 @@ QWidget* MainWindow::createMemoryPane()
 
     m_memoryData = m_simulator->GetMemory();
 
-    updateMemoryWithFormat(m_registerFormatComboBox->currentText());
-
     // Set up scrollable content for memory
     memContentWidget->setLayout(m_memoryLayout);
     scrollArea->setWidget(memContentWidget);
     scrollArea->setWidgetResizable(true);
 
     layout->addWidget(scrollArea);
-    rightPane->setLayout(layout);
+    rightPanel->setLayout(layout);
 
-    return rightPane;
+    return rightPanel;
 }
 
 void MainWindow::setupWidgets()
 {
     setWindowTitle("RISCV-Simulator");
 
-    const QStyleHints* styleHints = QGuiApplication::styleHints();
-    const bool isDark = styleHints->colorScheme() == Qt::ColorScheme::Dark;
+    const bool isDark = m_configData->theme == 1;
     setTheme(isDark);
 
     // CodeEditor
@@ -329,6 +355,38 @@ void MainWindow::setupWidgets()
     m_themeCombobox->addItems(list);
     m_themeCombobox->setCurrentIndex(isDark ? 1 : 0);
     list.clear();
+
+    // Register Format
+    m_registerFormatComboBox->setCurrentText(m_configData->regFormat);
+    updateRegisterWithFormat(m_configData->regFormat);
+
+    // Memory Format
+    m_memoryFormatComboBox->setCurrentText(m_configData->memFormat);
+    updateMemoryWithFormat(m_configData->memFormat);
+
+    // Set the speed
+    m_speed = m_configData->speed;
+    m_speedSlider->setValue(3050 - m_speed);
+
+    // Set the font size
+    QFont font = m_codeEditor->font();
+    font.setPointSize(m_configData->fontSize);
+    m_codeEditor->setFont(font);
+
+    // Set address visibility
+    m_codeEditor->setAddressesVisible(m_configData->addressesShown);
+
+    // Load last opened file
+    if (m_configData->lastOpenFile.isEmpty() || !QFile::exists(m_configData->lastOpenFile)) {
+        return;
+    }
+    m_file = new QFile(m_configData->lastOpenFile);
+    if (!m_file->open(QIODevice::ReadWrite)) {
+        return;
+    }
+    QTextStream in(m_file);
+    const QString text = in.readAll();
+    m_codeEditor->setPlainText(text);
 }
 
 void MainWindow::performConnections()
@@ -339,10 +397,48 @@ void MainWindow::performConnections()
     connect(m_speedSlider, &QSlider::valueChanged, this, &MainWindow::setSpeed);
     connect(m_memoryFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateMemoryWithFormat);
     connect(m_registerFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateRegisterWithFormat);
+    connect(m_newFileAction, &QAction::triggered, this, &MainWindow::newFile);
     connect(m_saveAsAction, &QAction::triggered, this, &MainWindow::saveAsFile);
     connect(m_saveAction, &QAction::triggered, this, &MainWindow::saveFile);
     connect(m_openAction, &QAction::triggered, this, &MainWindow::openFile);
     connect(m_themeCombobox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::setTheme);
+    connect(m_showRegistersAction, &QAction::triggered, this, &MainWindow::setRegisterPanelShown);
+    connect(m_showMemoryAction, &QAction::triggered, this, &MainWindow::setMemoryPanelShown);
+    connect(m_showAddressAction, &QAction::triggered, this, &MainWindow::setAddressesShown);
+}
+
+void MainWindow::setRegisterPanelShown(const bool shown) const
+{
+    const int width = shown ? 360 : 0;
+    m_registerPanel->setFixedWidth(width);
+    m_configData->registersShown = shown;
+    saveConfig();
+}
+
+void MainWindow::setMemoryPanelShown(const bool shown) const
+{
+    const int width = shown ? 300 : 0;
+    m_memoryPanel->setFixedWidth(width);
+    m_configData->memoryShown = shown;
+    saveConfig();
+}
+
+void MainWindow::setAddressesShown(const bool shown) const
+{
+    m_codeEditor->setAddressesVisible(shown);
+    m_configData->addressesShown = shown;
+    saveConfig();
+}
+
+void MainWindow::newFile()
+{
+    saveFile();
+    m_file->close();
+    delete m_file;
+    m_file = nullptr;
+    m_codeEditor->setPlainText("");
+    m_configData->lastOpenFile = "";
+    saveConfig();
 }
 
 void MainWindow::saveAsFile()
@@ -370,10 +466,15 @@ void MainWindow::saveAsFile()
     QTextStream out(m_file);
     m_file->resize(0);
     out << m_codeEditor->toPlainText();
+    m_configData->lastOpenFile = m_file->fileName();
+    saveConfig();
 }
 
-void MainWindow::saveFile()
+void MainWindow::saveFile(const bool openDialog)
 {
+    if (m_file == nullptr && !openDialog) {
+        return;
+    }
     if (m_file == nullptr) {
         const QString fileName =
             QFileDialog::getSaveFileName(this, "Save File", "", "Text Files (*.txt);;All Files (*)");
@@ -391,6 +492,8 @@ void MainWindow::saveFile()
     QTextStream out(m_file);
     m_file->resize(0);
     out << m_codeEditor->toPlainText();
+    m_configData->lastOpenFile = m_file->fileName();
+    saveConfig();
 }
 
 void MainWindow::openFile()
@@ -405,15 +508,17 @@ void MainWindow::openFile()
     else {
         m_file->close();
         m_file->setFileName(fileName);
-        if (!m_file->open(QIODevice::ReadWrite)) {
-            QMessageBox::information(this, tr("Unable to open file"), m_file->errorString());
-            return;
-        }
+    }
+    if (!m_file->open(QIODevice::ReadWrite)) {
+        QMessageBox::information(this, tr("Unable to open file"), m_file->errorString());
+        return;
     }
 
     QTextStream in(m_file);
     const QString text = in.readAll();
     m_codeEditor->setPlainText(text);
+    m_configData->lastOpenFile = m_file->fileName();
+    saveConfig();
 }
 
 void MainWindow::setSpeed(const int speed)
@@ -422,6 +527,8 @@ void MainWindow::setSpeed(const int speed)
     if (m_simulationThread) {
         m_simulationThread->setSpeed(m_speed);
     }
+    m_configData->speed = m_speed;
+    saveConfig();
 }
 
 void MainWindow::setTheme(const int index)
@@ -432,10 +539,14 @@ void MainWindow::setTheme(const int index)
     styleSheet.open(QFile::ReadOnly);
     const QString style(styleSheet.readAll());
     qApp->setStyleSheet(style);
+    m_configData->theme = index;
+    saveConfig();
 }
 
 void MainWindow::run()
 {
+    reset();
+    saveFile(false);
     if (!parseAndSetInstructions()) {
         return;
     }
@@ -457,10 +568,19 @@ void MainWindow::run()
 
 void MainWindow::step()
 {
+    saveFile(false);
+    m_highlighter->highlightError(-1);
     if (m_simulationThread != nullptr) {
         return;
     }
     if (!parseAndSetInstructions()) {
+        return;
+    }
+
+    // Highlight executing instruction
+    if (!m_hasStarted && m_instructionMap->size() > 0) {
+        m_hasStarted = true;
+        m_highlighter->highlightLine(m_instructionMap->at(0));
         return;
     }
 
@@ -475,6 +595,7 @@ void MainWindow::step()
         }
         return;
     }
+    m_highlighter->highlightError(calculateErrorLine(result.errorInstruction));
     errorPopup(ErrorParser::ParseError(result.error, calculateErrorLine(result.errorInstruction)));
 }
 
@@ -499,6 +620,7 @@ void MainWindow::reset()
     updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
     updateRegisterWithFormat(m_registerFormatComboBox->currentText());
     m_highlighter->highlightLine(-1);
+    m_hasStarted = false;
 }
 
 void MainWindow::executionError(const ExecutionResult& error)
@@ -511,21 +633,25 @@ void MainWindow::executionError(const ExecutionResult& error)
 
 void MainWindow::setResult(const ExecutionResult& result)
 {
-    // Highlight executed instruction
-    m_highlighter->highlightLine(static_cast<int32_t>(result.pc) / 4);
-
     // Update the register and memory values
-    m_pcData = result.pc;
-    highlightRegisterLineEdit(m_pcValue);
     if (result.registerChanged) {
         m_registerData[result.registerChange.reg] = static_cast<int32_t>(result.registerChange.value);
-        updateRegisterWithFormat(m_registerFormatComboBox->currentText());
         highlightRegisterLineEdit(m_registerMap[result.registerChange.reg]);
     }
     else if (result.memoryChanged) {
         m_memoryData[result.memoryChange.address] = result.memoryChange.value;
         updateMemoryWithFormat(m_memoryFormatComboBox->currentText());
         highlightMemoryLabel(m_memoryMap[result.memoryChange.address]);
+    }
+    m_pcData = result.pc;
+    updateRegisterWithFormat(m_registerFormatComboBox->currentText());
+    highlightRegisterLineEdit(m_pcValue);
+
+    if (m_instructionMap->size() > result.pc / 4) {
+        m_highlighter->highlightLine(m_instructionMap->at(result.pc / 4));
+    }
+    else {
+        m_highlighter->highlightLine(-1);
     }
 }
 
@@ -544,16 +670,15 @@ void MainWindow::updateRegisterWithFormat(const QString& format) const
     const uint32_t pcValueInt = m_pcData;
     m_pcValue->setText(toHex ? QString("%1").arg(pcValueInt, 8, 16, QChar('0')) : QString::number(pcValueInt));
 
-    // x0
-    m_registerMap[0]->setText("0 (read-only)");
-
     // remaining registers
-    for (int i = 1; i < 32; i++) {
+    for (int i = 0; i < 32; i++) {
         const int32_t regValueInt = m_registerData[i];
-        m_registerMap[i]->setText(toHex
-            ? QString("%1").arg(static_cast<uint32_t>(regValueInt), 8, 16, QChar('0'))
-            : QString::number(regValueInt));
+        m_registerMap[i]->setText(toHex ? QString("%1").arg(static_cast<uint32_t>(regValueInt), 8, 16, QChar('0'))
+                                        : QString::number(regValueInt));
     }
+
+    m_configData->regFormat = format;
+    saveConfig();
 }
 
 void MainWindow::updateMemoryWithFormat(const QString& format)
@@ -572,12 +697,14 @@ void MainWindow::updateMemoryWithFormat(const QString& format)
         // Group the bytes (4 bytes = 32 bits)
         for (int j = 0; j < 4; j++) {
             const uint8_t byteValue = (value >> (8 * j)) & 0xFF;
-            memoryRowText += (toHex
-                ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
-                : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
+            memoryRowText += (toHex ? QString("%1 ").arg(byteValue, 2, 16, QChar('0'))
+                                    : QString("%1 ").arg(byteValue, 3, 10, QChar('0')));
         }
         m_memoryMap[i]->setText(memoryRowText);
     }
+
+    m_configData->memFormat = format;
+    saveConfig();
 }
 
 void MainWindow::ensureMemoryMapCapacity()
@@ -613,13 +740,19 @@ void MainWindow::increaseFontSize() const
     QFont font = m_codeEditor->font();
     font.setPointSize(font.pointSize() + 1);
     m_codeEditor->setFont(font);
+    m_configData->fontSize = font.pointSize();
+    saveConfig();
 }
 
 void MainWindow::decreaseFontSize() const
 {
     QFont font = m_codeEditor->font();
+    if (font.pointSize() <= 1)
+        return;
     font.setPointSize(font.pointSize() - 1);
     m_codeEditor->setFont(font);
+    m_configData->fontSize = font.pointSize();
+    saveConfig();
 }
 
 void MainWindow::wheelEvent(QWheelEvent* event)
@@ -637,9 +770,11 @@ void MainWindow::wheelEvent(QWheelEvent* event)
     }
 }
 
-bool MainWindow::errorPopup(const string& message, const bool yesNoButtons) const
+bool MainWindow::errorPopup(const string& message, const bool yesNoButtons)
 {
-    QMessageBox msgBox;
+    QMessageBox msgBox(this);
+    msgBox.setIcon(QMessageBox::Critical);
+    msgBox.setWindowTitle("Error");
     msgBox.setText(QString::fromStdString(message));
     if (!yesNoButtons) {
         msgBox.exec();
@@ -649,7 +784,7 @@ bool MainWindow::errorPopup(const string& message, const bool yesNoButtons) cons
     return msgBox.exec() == QMessageBox::Yes;
 }
 
-bool MainWindow::parseAndSetInstructions() const
+bool MainWindow::parseAndSetInstructions()
 {
     QStringList lines = m_codeEditor->toPlainText().split('\n');
     std::vector<std::string> stdLines;
@@ -658,13 +793,23 @@ bool MainWindow::parseAndSetInstructions() const
         stdLines.push_back(line.toStdString());
     }
     const ParsingResult result = Parser::Parse(stdLines);
-    if (!result.success) {
-        errorPopup(ErrorParser::ParseError(result.errorType, calculateErrorLine(result.errorLine)));
-        return false;
-    }
 
     m_simulator->SetInstructions(result.instructions);
-    return true;
+    if (m_instructionMap != nullptr) {
+        delete m_instructionMap;
+        m_instructionMap = nullptr;
+    }
+    m_instructionMap = new vector(result.instructionMap);
+
+    if (result.success) {
+        return true;
+    }
+    m_highlighter->highlightError(result.errorLine - 1);
+
+    const string format =
+        InstructionFormats.contains(result.errorPart) ? "\nUsage: " + InstructionFormats.at(result.errorPart) : "";
+    errorPopup(ErrorParser::ParseError(result.errorType, result.errorLine) + format);
+    return false;
 }
 
 void MainWindow::highlightMemoryLabel(QLabel* label) const
@@ -679,16 +824,17 @@ void MainWindow::highlightRegisterLineEdit(QLineEdit* lineEdit) const
     QTimer::singleShot(300, [lineEdit]() { lineEdit->setStyleSheet(""); });
 }
 
-int MainWindow::calculateErrorLine(int instruction) const
+uint32_t MainWindow::calculateErrorLine(const int instruction) const
 {
-    for (int i = 0; i < m_codeEditor->document()->blockCount(); i++) {
-        const auto block = m_codeEditor->document()->findBlockByLineNumber(i);
-        if (i >= instruction) {
-            break;
-        }
-        if (block.text() == "") {
-            instruction++;
-        }
+    if (m_instructionMap->size() < instruction) {
+        return 0;
     }
-    return instruction;
+    return m_instructionMap->at(instruction - 1) + 1;
+}
+
+void MainWindow::saveConfig() const { Config::serialize(*m_configData); }
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    saveFile();
+    QMainWindow::closeEvent(event);
 }
