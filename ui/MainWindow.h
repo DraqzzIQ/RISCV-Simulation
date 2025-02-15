@@ -10,9 +10,9 @@
 #include <QMainWindow>
 #include <QMutex>
 #include <QString>
-#include <QWaitCondition>
 
 #include "../simulator/Simulator.h"
+#include "Config.h"
 #include "SimulationThread.h"
 #include "highlighters/QRiscvAsmHighlighter.h"
 
@@ -28,8 +28,9 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
 
 private slots:
+    void newFile();
     void saveAsFile();
-    void saveFile();
+    void saveFile(bool openDialog = true);
     void openFile();
     void run();
     void step();
@@ -42,38 +43,47 @@ private:
     QString loadCode(const QString& path);
     void initData();
     void createWidgets();
-    QWidget* createRegisterPane();
-    QWidget* createMemoryPane();
+    QWidget* createRegisterPanel();
+    QWidget* createMemoryPanel();
     void createToolbar();
     void updateRegisterWithFormat(const QString& format) const;
     void updateMemoryWithFormat(const QString& format);
     void setupWidgets();
     void performConnections();
+    void setRegisterPanelShown(bool shown) const;
+    void setMemoryPanelShown(bool shown) const;
+    void setAddressesShown(bool shown) const;
     void increaseFontSize() const;
     void decreaseFontSize() const;
     void wheelEvent(QWheelEvent* event) override;
     void ensureMemoryMapCapacity();
-    bool errorPopup(const string& message, bool yesNoButtons = false) const;
-    bool parseAndSetInstructions() const;
+    bool errorPopup(const string& message, bool yesNoButtons = false);
+    bool parseAndSetInstructions();
     void reset();
     void setResult(const ExecutionResult& result);
     void executionError(const ExecutionResult& result);
     void executionFinished();
     void highlightMemoryLabel(QLabel* label) const;
     void highlightRegisterLineEdit(QLineEdit* lineEdit) const;
-    int calculateErrorLine(int instruction) const;
+    uint32_t calculateErrorLine(int instruction) const;
+    void saveConfig() const;
+    void closeEvent(QCloseEvent* event) override;
 
     QSlider* m_speedSlider;
     QHBoxLayout* m_setupLayout;
     QComboBox* m_themeCombobox;
     QCodeEditor* m_codeEditor;
-    QCompleter* m_completer;
+    QRiscvAsmCompleter* m_completer;
     QRiscvAsmHighlighter* m_highlighter;
     QVector<QPair<QString, QSyntaxStyle*>> m_themes;
     QFile* m_file;
+    QAction* m_newFileAction;
     QAction* m_saveAsAction;
     QAction* m_saveAction;
     QAction* m_openAction;
+    QAction* m_showMemoryAction;
+    QAction* m_showRegistersAction;
+    QAction* m_showAddressAction;
     QPushButton* m_runButton;
     QPushButton* m_stepButton;
     QPushButton* m_stopButton;
@@ -88,10 +98,16 @@ private:
     vector<QLabel*> m_memoryMap;
     QComboBox* m_memoryFormatComboBox;
     QFont* m_monoFont; // Monospace font for memory and register values
+    QWidget* m_registerPanel;
+    QWidget* m_memoryPanel;
 
+    vector<uint32_t>* m_instructionMap;
+    bool m_hasStarted;
     Simulator* m_simulator;
     int m_speed;
     SimulationThread* m_simulationThread;
+
+    ConfigData* m_configData;
 };
 
 

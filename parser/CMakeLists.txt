@@ -4,7 +4,9 @@ project(parser)
 set(CMAKE_CXX_STANDARD 23)
 
 add_library(parser STATIC Parser.cpp
-        ParsingResult.h)
+        ParsingResult.h
+        OpCodes.h
+        OpCodes.cpp)
 
 add_executable(parser-cli ParserCLI.cpp)
 
