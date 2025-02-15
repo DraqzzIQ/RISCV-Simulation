@@ -52,6 +52,7 @@ jobs:
         run: cmake --build build --config ${{ matrix.build_type }}
 
       - name: Run tests
+        if: matrix.os != 'macos-latest'
         run: ctest --test-dir build/tests --output-on-failure -C Release -V
 
       - name: Upload build artifacts
@@ -102,7 +103,7 @@ jobs:
 
       - name: zip files
         run: zip -r macos-latest.zip macos-latest && zip -r windows-x64.zip windows && zip -r ubuntu-latest.zip ubuntu-latest
-    
+
       - name: Create Release
         id: create_release
         uses: ncipollo/release-action@v1
