@@ -137,7 +137,7 @@ void QRiscvAsmHighlighter::highlightBlock(const QString& text)
                 }
             }
             // check for label references
-            else if (std::find(m_labels.begin(), m_labels.end(), match.captured().toLower()) != m_labels.end()) {
+            else if (std::ranges::find(m_labels, match.captured().toLower().toStdString()) != m_labels.end()) {
                 setFormat(match.capturedStart(), match.capturedEnd(), labelFormat);
                 continue;
             }
