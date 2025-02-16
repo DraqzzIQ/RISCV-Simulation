@@ -399,7 +399,7 @@ void MainWindow::performConnections()
     connect(m_registerFormatComboBox, &QComboBox::currentTextChanged, this, &MainWindow::updateRegisterWithFormat);
     connect(m_newFileAction, &QAction::triggered, this, &MainWindow::newFile);
     connect(m_saveAsAction, &QAction::triggered, this, &MainWindow::saveAsFile);
-    connect(m_saveAction, &QAction::triggered, this, &MainWindow::saveFile);
+    connect(m_saveAction, &QAction::triggered, this, [this]() { saveFile(true); });
     connect(m_openAction, &QAction::triggered, this, &MainWindow::openFile);
     connect(m_themeCombobox, QOverload<int>::of(&QComboBox::currentIndexChanged), this, &MainWindow::setTheme);
     connect(m_showRegistersAction, &QAction::triggered, this, &MainWindow::setRegisterPanelShown);

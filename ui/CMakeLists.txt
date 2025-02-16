@@ -14,7 +14,7 @@ find_package(Qt6 COMPONENTS
         REQUIRED)
 
 
-add_executable(RISCV-Simulator ${GUI_TYPE}
+add_executable(RISCV-Simulator
         main.cpp
         MainWindow.cpp
         MainWindow.h
@@ -27,6 +27,11 @@ add_executable(RISCV-Simulator ${GUI_TYPE}
         completers/QRiscvAsmCompleter.cpp
         SimulationThread.cpp
 )
+
+if (WIN32)
+    set_target_properties(RISCV-Simulator PROPERTIES WIN32_EXECUTABLE ON)
+endif ()
+
 
 add_subdirectory(lib/K-Editor)
 
