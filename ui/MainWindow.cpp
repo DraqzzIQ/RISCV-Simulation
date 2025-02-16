@@ -579,6 +579,8 @@ void MainWindow::step()
 
     // Highlight executing instruction
     if (!m_hasStarted && m_instructionMap->size() > 0) {
+        m_pcData = 0;
+        updateRegisterWithFormat(m_registerFormatComboBox->currentText());
         m_hasStarted = true;
         m_highlighter->highlightLine(m_instructionMap->at(0));
         return;
@@ -589,6 +591,8 @@ void MainWindow::step()
         setResult(result);
         return;
     }
+
+    m_hasStarted = false;
     if (result.error == ExecutionError::PC_OUT_OF_BOUNDS) {
         if (errorPopup("Program counter out of bounds. Reset?", true)) {
             this->reset();
