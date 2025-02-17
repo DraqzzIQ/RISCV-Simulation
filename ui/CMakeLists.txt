@@ -13,6 +13,9 @@ find_package(Qt6 COMPONENTS
         Widgets
         REQUIRED)
 
+if (WIN32)
+    set(APP_ICON resources/icon.rc)
+endif ()
 
 add_executable(RISCV-Simulator
         main.cpp
@@ -26,6 +29,7 @@ add_executable(RISCV-Simulator
         highlighters/QRiscvAsmHighlighter.cpp
         completers/QRiscvAsmCompleter.cpp
         SimulationThread.cpp
+        ${APP_ICON}
 )
 
 if (WIN32)
@@ -52,6 +56,22 @@ add_custom_command(TARGET RISCV-Simulator POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy -t $<TARGET_FILE_DIR:RISCV-Simulator> $<TARGET_RUNTIME_DLLS:RISCV-Simulator>
         COMMAND_EXPAND_LISTS
 )
+
+option(BUILD_FLATPAK "Build flatpak" OFF)
+
+if (BUILD_FLATPAK)
+    # Install the executable into "${CMAKE_INSTALL_PREFIX}/bin".
+    install(TARGETS RISCV-Simulator
+            BUNDLE DESTINATION .
+            RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    )
+    # .desktop file for Linux
+    install(FILES resources/com.github.draqzziq.riscvsimulator.desktop
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications)
+    # Icon for Linux
+    install(FILES resources/com.github.draqzziq.riscvsimulator.svg
+            DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps)
+endif ()
 
 #if (WIN32 AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
 #    set(DEBUG_SUFFIX)

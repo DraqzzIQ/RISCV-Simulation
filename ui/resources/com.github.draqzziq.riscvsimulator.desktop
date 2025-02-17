@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=RISC-V Simulator
+Exec=RISCV-Simulator
+Icon=com.github.draqzziq.riscvsimulator
+Type=Application
+Categories=Development;

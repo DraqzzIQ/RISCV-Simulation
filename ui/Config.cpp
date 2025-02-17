@@ -1,11 +1,17 @@
 #include "Config.h"
 #include <QFile>
+#include <QStandardPaths>
 #include <filesystem>
+#include <qdir.h>
+#include <qfileinfo.h>
+#include <qurl.h>
+
 #include "lib/json/json.hpp"
 
 using json = nlohmann::json;
 
-const QString Config::path = "config.json";
+const QString Config::path =
+    QStandardPaths::writableLocation(QStandardPaths::ConfigLocation) + "/RISCV-Simulator/config.json";
 
 ConfigData Config::deserialize()
 {
@@ -48,6 +54,11 @@ void Config::serialize(const ConfigData& data)
     j["addressesShown"] = data.addressesShown;
 
     QFile file(path);
+    const QFileInfo info(file);
+
+    if (!std::filesystem::exists(info.absoluteDir().path().toStdString())) {
+        std::filesystem::create_directories(info.absoluteDir().path().toStdString());
+    }
 
     if (!file.open(QIODevice::WriteOnly)) {
         return;
