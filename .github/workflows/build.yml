@@ -72,12 +72,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          submodules: true
+          submodules: recursive
           fetch-depth: 0
 
-      - name: Update submodules
-        run: git submodule update --init --recursive
-         
       - name: Build Flatpak   
         uses: flathub-infra/flatpak-github-actions/flatpak-builder@master
         with:
@@ -89,7 +86,9 @@ jobs:
     permissions:
       contents: write
     if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
-    needs: build
+    needs: 
+        - build
+        - flatpak
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -124,7 +123,7 @@ jobs:
         run: mv windows-latest/RISCV-Simulation/build/ui/Release/RISCV-Simulator.exe windows
 
       - name: zip files
-        run: zip -r macos-latest.zip macos-latest && zip -r windows-x64.zip windows && zip -r ubuntu-latest.zip ubuntu-latest
+        run: zip -r macos-latest.zip macos-latest && zip -r windows-x64.zip windows
 
       - name: Create Release
         id: create_release
