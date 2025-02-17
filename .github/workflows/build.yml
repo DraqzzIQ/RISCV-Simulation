@@ -82,7 +82,7 @@ jobs:
   release:
     permissions:
       contents: write
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/dev'
+    if: github.ref == 'refs/heads/master'
     needs: 
         - build
         - flatpak
@@ -117,7 +117,7 @@ jobs:
         run: mv windows-latest/RISCV-Simulation/build/ui/Release/RISCV-Simulator.exe windows
 
       - name: zip files
-        run: zip -r macos-latest.zip macos-latest && zip -r windows-x64.zip windows
+        run: zip -r macos-latest.zip macos-latest && zip -r riscv-simulator.zip windows
 
       - name: Create Release
         id: create_release
