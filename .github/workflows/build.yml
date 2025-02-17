@@ -127,6 +127,6 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.release_tag.outputs.new_tag }}
-          artifacts: windows-x64.zip, com.github.draqzziq.riscvsimulator-x86_64.flatpak.zip # macos-latest.zip
+          artifacts: windows-x64.zip, com.github.draqzziq.riscvsimulator-x86_64.flatpak # macos-latest.zip
           draft: false
           prerelease: ${{ steps.prerelease.outputs.prerelease }}
