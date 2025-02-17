@@ -69,8 +69,17 @@ jobs:
       image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.8
       options: --privileged
     steps:
-      - uses: actions/checkout@v4
-      - uses: flathub-infra/flatpak-github-actions/flatpak-builder@master
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+
+      - name: Update submodules
+        run: git submodule update --init --recursive
+         
+      - name: Build Flatpak   
+        uses: flathub-infra/flatpak-github-actions/flatpak-builder@master
         with:
           bundle: com.github.draqzziq.riscvsimulator
           manifest-path: flatpak/com.github.draqzziq.riscvsimulator.yaml
@@ -85,12 +94,6 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        with:
-          submodules: true
-          fetch-depth: 0
-
-      - name: Update submodules
-        run: git submodule update --init --recursive
 
       - name: Determine if prerelease
         id: prerelease
