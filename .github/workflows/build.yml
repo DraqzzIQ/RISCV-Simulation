@@ -24,12 +24,10 @@ jobs:
               build\ui\Release\Qt6Gui.dll
               build\ui\Release\Qt6Widgets.dll
               D:\a\RISCV-Simulation\Qt\6.6.3\msvc2019_64\plugins\platforms\qwindows.dll
-          - os: ubuntu-latest
-            binary: build/ui/RISCV-Simulator
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
         with:
           submodules: true
           fetch-depth: 0
@@ -56,13 +54,28 @@ jobs:
         run: ctest --test-dir build/tests --output-on-failure -C Release -V
 
       - name: Upload build artifacts
+        if: matrix.os != 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           compression-level: 3
           name: ${{ matrix.os }}
           path: ${{ matrix.binary }}
           overwrite: true
-
+  
+  flatpak:
+    name: "Build Flatpak"
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:kde-6.8
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: flathub-infra/flatpak-github-actions/flatpak-builder@master
+        with:
+          bundle: com.github.draqzziq.riscvsimulator
+          manifest-path: flatpak/com.github.draqzziq.riscvsimulator.yaml
+          cache-key: flatpak-builder-${{ github.sha }}
+  
   release:
     permissions:
       contents: write
@@ -71,7 +84,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Determine if prerelease
         id: prerelease

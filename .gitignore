@@ -2,3 +2,5 @@
 *cmake-build*/
 build/
 /config.json
+.flatpak-builder/
+repo/

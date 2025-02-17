@@ -839,6 +839,8 @@ uint32_t MainWindow::calculateErrorLine(const int instruction) const
 void MainWindow::saveConfig() const { Config::serialize(*m_configData); }
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-    saveFile();
+    if (m_codeEditor->toPlainText() != "") {
+        saveFile();
+    }
     QMainWindow::closeEvent(event);
 }
