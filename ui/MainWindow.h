@@ -13,6 +13,7 @@
 
 #include "../simulator/Simulator.h"
 #include "Config.h"
+#include "HelpWindow.h"
 #include "SimulationThread.h"
 #include "highlighters/QRiscvAsmHighlighter.h"
 
@@ -32,6 +33,7 @@ private slots:
     void saveAsFile();
     void saveFile(bool openDialog = true);
     void openFile();
+    void showHelp();
     void run();
     void step();
     void stop();
@@ -84,6 +86,7 @@ private:
     QAction* m_showMemoryAction;
     QAction* m_showRegistersAction;
     QAction* m_showAddressAction;
+    QAction* m_helpAction;
     QPushButton* m_runButton;
     QPushButton* m_stepButton;
     QPushButton* m_stopButton;
@@ -108,6 +111,8 @@ private:
     SimulationThread* m_simulationThread;
 
     ConfigData* m_configData;
+
+    HelpWindow* m_helpWindow;
 };
 
 

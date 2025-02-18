@@ -30,6 +30,8 @@ add_executable(RISCV-Simulator
         completers/QRiscvAsmCompleter.cpp
         SimulationThread.cpp
         ${APP_ICON}
+        HelpWindow.cpp
+        HelpWindow.h
 )
 
 if (WIN32)
