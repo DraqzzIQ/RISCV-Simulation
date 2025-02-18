@@ -33,7 +33,8 @@ MainWindow::MainWindow(QWidget* parent) :
     m_showRegistersAction(nullptr), m_showAddressAction(nullptr), m_spacer(nullptr), m_pcData(0), m_pcValue(nullptr),
     m_registerFormatComboBox(nullptr), m_memoryLayout(nullptr), m_memoryFormatComboBox(nullptr),
     m_monoFont(new QFont("Courier", 11)), m_registerPanel(nullptr), m_memoryPanel(nullptr), m_instructionMap(nullptr),
-    m_hasStarted(false), m_simulator(nullptr), m_speed(1000), m_simulationThread(nullptr), m_configData(nullptr)
+    m_hasStarted(false), m_simulator(nullptr), m_speed(1000), m_simulationThread(nullptr), m_configData(nullptr),
+    m_helpWindow(nullptr)
 {
     initData();
     createWidgets();
@@ -125,6 +126,10 @@ void MainWindow::createWidgets()
     m_showAddressAction->setChecked(m_configData->addressesShown);
     m_showAddressAction->setShortcut(QKeySequence("Ctrl+I"));
     viewMenu->addAction(m_showAddressAction);
+
+    QMenu* helpWindow = menuBar->addMenu("Help");
+    m_helpAction = helpWindow->addAction("View Instructions");
+    m_helpAction->setShortcut(QKeySequence("Ctrl+H"));
 
     createToolbar();
 
@@ -405,6 +410,7 @@ void MainWindow::performConnections()
     connect(m_showRegistersAction, &QAction::triggered, this, &MainWindow::setRegisterPanelShown);
     connect(m_showMemoryAction, &QAction::triggered, this, &MainWindow::setMemoryPanelShown);
     connect(m_showAddressAction, &QAction::triggered, this, &MainWindow::setAddressesShown);
+    connect(m_helpAction, &QAction::triggered, this, &MainWindow::showHelp);
 }
 
 void MainWindow::setRegisterPanelShown(const bool shown) const
@@ -519,6 +525,14 @@ void MainWindow::openFile()
     m_codeEditor->setPlainText(text);
     m_configData->lastOpenFile = m_file->fileName();
     saveConfig();
+}
+
+void MainWindow::showHelp()
+{
+    if (!m_helpWindow) {
+        m_helpWindow = new HelpWindow(this);
+    }
+    m_helpWindow->show();
 }
 
 void MainWindow::setSpeed(const int speed)
@@ -839,7 +853,8 @@ uint32_t MainWindow::calculateErrorLine(const int instruction) const
 void MainWindow::saveConfig() const { Config::serialize(*m_configData); }
 void MainWindow::closeEvent(QCloseEvent* event)
 {
-    if (m_codeEditor->toPlainText() != "") {
+    const QString content = m_codeEditor->toPlainText();
+    if (content.trimmed().isEmpty()) {
         saveFile();
     }
     QMainWindow::closeEvent(event);
