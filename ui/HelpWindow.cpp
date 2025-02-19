@@ -3,10 +3,12 @@
 
 HelpWindow::HelpWindow(QWidget* parent) : QDialog(parent)
 {
+    this->setProperty("cssClass", "themedBackground");
     setWindowTitle("RISC-V Instructions");
     resize(900, 600);
 
     tableWidget = new QTableWidget(this);
+    tableWidget->setProperty("cssClass", "themedBackground");
     tableWidget->setColumnCount(7);
     tableWidget->setHorizontalHeaderLabels(
         {"Opcode", "Operand 1", "Operand 2", "Operand 3", "Max Imm/Offset", "Description", "Example"});

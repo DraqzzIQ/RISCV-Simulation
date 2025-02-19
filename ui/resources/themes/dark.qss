@@ -108,6 +108,14 @@ QMessageBox {
 QCodeEditor {
     background-color: #282A36;
 }
+QTableWidget {
+    background-color: #282A36;
+    color: #FFFFFF;
+}
+QTableWidget QHeaderView {
+    background-color: #282A36;
+    color: #FFFFFF;
+}
 *[cssClass="themedBackground"] {
     background-color: #282A36;
 }
