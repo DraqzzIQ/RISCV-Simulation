@@ -854,7 +854,7 @@ void MainWindow::saveConfig() const { Config::serialize(*m_configData); }
 void MainWindow::closeEvent(QCloseEvent* event)
 {
     const QString content = m_codeEditor->toPlainText();
-    if (content.trimmed().isEmpty()) {
+    if (!content.trimmed().isEmpty()) {
         saveFile();
     }
     QMainWindow::closeEvent(event);
