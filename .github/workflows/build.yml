@@ -72,7 +72,7 @@ jobs:
           submodules: recursive
           fetch-depth: 0
 
-      - name: Build Flatpak   
+      - name: Build Flatpak
         uses: flathub-infra/flatpak-github-actions/flatpak-builder@master
         with:
           bundle: com.github.draqzziq.riscvsimulator
@@ -83,9 +83,9 @@ jobs:
     permissions:
       contents: write
     if: github.ref == 'refs/heads/master'
-    needs: 
-        - build
-        - flatpak
+    needs:
+      - build
+      - flatpak
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -117,13 +117,16 @@ jobs:
         run: mv windows-latest/RISCV-Simulation/build/ui/Release/RISCV-Simulator.exe windows
 
       - name: zip files
-        run: zip -r macos-latest.zip macos-latest && zip -r riscv-simulator.zip windows
+        run: zip -r macos-latest.zip macos-latest && zip -r riscv-simulator-windowsx64.zip windows
+
+      - name: rename flatpak
+        run: mv com.github.draqzziq.riscvsimulator-x86_64.flatpak/com.github.draqzziq.riscvsimulator com.github.draqzziq.riscvsimulator-x86_64.flatpak/com.github.draqzziq.riscvsimulator.flatpak
 
       - name: Create Release
         id: create_release
         uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.release_tag.outputs.new_tag }}
-          artifacts: riscv-simulator.zip, riscv-simulator.flatpak # macos-latest.zip
+          artifacts: riscv-simulator-windowsx64.zip, com.github.draqzziq.riscvsimulator-x86_64.flatpak/com.github.draqzziq.riscvsimulator.flatpak # macos-latest.zip
           draft: false
           prerelease: ${{ steps.prerelease.outputs.prerelease }}
